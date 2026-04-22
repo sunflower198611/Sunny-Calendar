@@ -271,7 +271,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
       <span>周报</span>
     </div>
-    <div class="ni" id="nav-my">
+    <div class="ni" id="nav-my" onclick="switchNav('my')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span>我的</span>
     </div>
@@ -1103,12 +1103,276 @@ function saveNew(){
 }
 
 // ═══════════════════════════════════════
+// STORAGE — localStorage 自动保存
+// ═══════════════════════════════════════
+const STORAGE_KEY = 'sunny_calendar_items';
+
+// 把 ITEMS 数组存入 localStorage
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ITEMS));
+  } catch(e) {
+    console.warn('存储失败', e);
+  }
+}
+
+// 从 localStorage 读取数据，合并到 ITEMS
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return; // 第一次打开，没有存储数据，用默认数据
+    const saved = JSON.parse(raw);
+    if (!Array.isArray(saved) || saved.length === 0) return;
+    // 用存储的数据替换默认数据
+    ITEMS.length = 0;
+    saved.forEach(d => ITEMS.push(d));
+  } catch(e) {
+    console.warn('读取存储失败', e);
+  }
+}
+
+// 在所有会修改 ITEMS 的操作后调用 saveToStorage()
+// 需要 patch 的函数：toggleDone, dismissPill, doDelete, saveDetail, saveNew
+
+// patch toggleDone
+const _toggleDone = toggleDone;
+function toggleDone(idx) {
+  ITEMS[idx].done = !ITEMS[idx].done;
+  saveToStorage();
+  renderList(); renderUpcoming(); updateUrgBadge();
+  toast(ITEMS[idx].done ? '已完成，划线留存' : '已取消完成标记');
+}
+
+// patch dismissPill
+const _dismissPill = dismissPill;
+function dismissPill(idx) {
+  ITEMS[idx].done = true;
+  saveToStorage();
+  renderUpcoming(); renderList(); updateUrgBadge();
+  toast('已标记完成，划线留存');
+}
+
+// patch doDelete
+const _doDelete = doDelete;
+function doDelete() {
+  const name = ITEMS[curIdx].name;
+  ITEMS.splice(curIdx, 1);
+  curIdx = -1;
+  saveToStorage();
+  toast('已删除：' + name);
+  goBack();
+}
+
+// patch saveDetail
+const _saveDetail = saveDetail;
+function saveDetail() {
+  if (curIdx < 0) return;
+  const d = ITEMS[curIdx];
+  d.name = document.getElementById('d-ename').value.trim() || d.name;
+  d.info = document.getElementById('d-einfo').value.trim();
+  d.date = document.getElementById('d-edate').value.trim();
+  d.u = dCurU;
+  const repOn = document.querySelector('#d-rep .si.on');
+  const repIdx = [...document.querySelectorAll('#d-rep .si')].indexOf(repOn);
+  d.type = repIdx === 1 ? 'once' : 'cycle';
+  d.remind = [...document.querySelectorAll('#d-rtw .rt.on')].map(e => e.dataset.v).join('/');
+  document.getElementById('d-name').textContent = d.name;
+  document.getElementById('d-info').textContent = d.info;
+  const bdg = document.getElementById('d-badge');
+  bdg.className = 'badge ' + UC[d.u]; bdg.textContent = UL[d.u];
+  saveToStorage();
+  toast('已保存修改');
+  renderHome();
+}
+
+// patch saveNew
+const _saveNew = saveNew;
+function saveNew() {
+  const name = document.getElementById('a-name').value.trim();
+  if (!name) { toast('请填写条目名称'); return; }
+  const newSub = document.getElementById('a-newsub').value.trim() || aCurSub;
+  const remind = [...document.querySelectorAll('#a-rtw .rt.on')].map(e => e.dataset.v).join('/');
+  ITEMS.push({
+    cat: A_CATS[aCatIdx], sub: newSub, name,
+    info: document.getElementById('a-note').value.trim(),
+    date: document.getElementById('a-de').value.trim(),
+    type: aOnce ? 'once' : 'cycle', remind, u: 'g', done: false
+  });
+  document.getElementById('a-name').value = '';
+  document.getElementById('a-note').value = '';
+  document.getElementById('a-de').value = '';
+  document.getElementById('a-ds').value = '';
+  saveToStorage();
+  toast('已添加：' + name);
+  goBack();
+}
+
+// patch qDone
+const _qDone = qDone;
+function qDone() {
+  if (curIdx < 0) return;
+  ITEMS[curIdx].done = !ITEMS[curIdx].done;
+  const db = document.getElementById('d-done-btn');
+  db.textContent = ITEMS[curIdx].done ? '已完成 ✓' : '标记完成';
+  db.classList.toggle('q-done', ITEMS[curIdx].done);
+  saveToStorage();
+  toast(ITEMS[curIdx].done ? '已标记完成，划线留存' : '已取消完成标记');
+  renderUpcoming(); updateUrgBadge();
+}
+
+// ═══════════════════════════════════════
+// 导出 / 导入
+// ═══════════════════════════════════════
+function exportData() {
+  const json = JSON.stringify(ITEMS, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  a.href = url;
+  a.download = `sunny-calendar-备份-${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出备份文件');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) throw new Error('格式错误');
+        ITEMS.length = 0;
+        data.forEach(d => ITEMS.push(d));
+        saveToStorage();
+        renderHome();
+        toast(`已导入 ${data.length} 条数据`);
+        switchNav('home');
+      } catch(err) {
+        toast('导入失败，请检查文件格式');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearStorage() {
+  if (!confirm('确认清空所有数据并恢复默认？此操作不可撤销。')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+// ═══════════════════════════════════════
+// 我的页面
+// ═══════════════════════════════════════
+function renderMyPage() {
+  const total = ITEMS.length;
+  const done = ITEMS.filter(d => d.done).length;
+  const urg = ITEMS.filter(d => d.u === 'r' && !d.done).length;
+  const soon = ITEMS.filter(d => d.u === 'a' && !d.done).length;
+
+  // 检查 localStorage 占用
+  let storageSize = '—';
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) storageSize = (new Blob([raw]).size / 1024).toFixed(1) + ' KB';
+  } catch(e) {}
+
+  document.getElementById('itemList').innerHTML = `
+    <div style="padding:50px 16px 20px">
+      <div style="font-size:20px;font-weight:500;margin-bottom:4px">Sunny <em style="color:var(--gold);font-style:normal">Calendar</em></div>
+      <div style="font-size:12px;color:var(--mu)">个人提醒管理</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 20px">
+      <div style="background:var(--bg2);border:.5px solid var(--gb);border-radius:var(--r);padding:14px">
+        <div style="font-size:26px;font-weight:500;color:var(--gold2)">${total}</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:3px">全部条目</div>
+      </div>
+      <div style="background:var(--bg2);border:.5px solid var(--gb);border-radius:var(--r);padding:14px">
+        <div style="font-size:26px;font-weight:500;color:var(--gt)">${done}</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:3px">已完成</div>
+      </div>
+      <div style="background:var(--bg2);border:.5px solid var(--rbd);border-radius:var(--r);padding:14px;background:var(--rb)">
+        <div style="font-size:26px;font-weight:500;color:var(--rt)">${urg}</div>
+        <div style="font-size:11px;color:var(--rt);margin-top:3px;opacity:.8">紧急待处理</div>
+      </div>
+      <div style="background:var(--ab);border:.5px solid var(--abd);border-radius:var(--r);padding:14px">
+        <div style="font-size:26px;font-weight:500;color:var(--at)">${soon}</div>
+        <div style="font-size:11px;color:var(--at);margin-top:3px;opacity:.8">即将到期</div>
+      </div>
+    </div>
+
+    <div style="padding:0 16px;margin-bottom:10px">
+      <div style="font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px">数据管理</div>
+
+      <div style="background:var(--bg2);border:.5px solid var(--gb);border-radius:var(--rl);overflow:hidden;margin-bottom:12px">
+        <div style="padding:13px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--gb)">
+          <div>
+            <div style="font-size:14px">自动保存</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:2px">已启用 · 本地存储 ${storageSize}</div>
+          </div>
+          <div style="font-size:12px;padding:4px 10px;border-radius:99px;background:var(--gb3);color:var(--gt);border:.5px solid var(--gbd)">已开启</div>
+        </div>
+        <div style="padding:13px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--gb);cursor:pointer" onclick="exportData()">
+          <div>
+            <div style="font-size:14px">导出备份</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:2px">下载 .json 文件到本地</div>
+          </div>
+          <div style="color:var(--gold);font-size:18px">↓</div>
+        </div>
+        <div style="padding:13px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="importData()">
+          <div>
+            <div style="font-size:14px">导入备份</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:2px">从 .json 文件恢复数据</div>
+          </div>
+          <div style="color:var(--gold);font-size:18px">↑</div>
+        </div>
+      </div>
+
+      <div style="padding:13px 16px;background:var(--rb);border:.5px solid var(--rbd);border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="clearStorage()">
+        <div>
+          <div style="font-size:14px;color:var(--rt)">清空所有数据</div>
+          <div style="font-size:11px;color:var(--rt);margin-top:2px;opacity:.7">恢复默认，不可撤销</div>
+        </div>
+        <div style="color:var(--rt);font-size:16px">✕</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+  `;
+}
+
+// ═══════════════════════════════════════
+// patch switchNav 支持 my
+// ═══════════════════════════════════════
+const _switchNav = switchNav;
+function switchNav(k) {
+  curNav = k;
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
+  document.getElementById('nav-' + k)?.classList.add('on');
+  if (k === 'home') { selCat(activeCat); return; }
+  if (k === 'urg')  { renderUrgPage();   return; }
+  if (k === 'cal')  { renderCalPage();   return; }
+  if (k === 'rpt')  { renderRptPage();   return; }
+  if (k === 'my')   { renderMyPage();    return; }
+}
+
+// ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
-pageStack=['p-home'];
+loadFromStorage(); // ← 先从 localStorage 读，有就用存储的，没有就用默认数据
+pageStack = ['p-home'];
 renderHome();
 renderASubs(A_CATS[0]);
-aUpdRsum();upPv();
+aUpdRsum(); upPv();
 </script>
 </body>
 </html>
