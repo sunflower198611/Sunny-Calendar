@@ -303,7 +303,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
       <span>日历</span>
     </div>
-    <div class="ni">
+    <div class="ni" onclick="goTo('p-mine')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span>我的</span>
     </div>
@@ -581,7 +581,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
       <span>日历</span>
     </div>
-    <div class="ni">
+    <div class="ni" onclick="goTo('p-mine')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span>我的</span>
     </div>
@@ -630,7 +630,88 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
       <span>日历</span>
     </div>
-    <div class="ni">
+    <div class="ni" onclick="goTo('p-mine')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+      <span>我的</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 6: 我的
+     ══════════════════════════════════ -->
+<div class="page hidden" id="p-mine">
+  <div style="flex-shrink:0">
+    <div class="topbar">
+      <div class="logo">Sunny <em>Calendar</em></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div style="padding:0 16px">
+
+      <!-- 数据状态卡片 -->
+      <div style="background:var(--bg2);border:0.5px solid var(--gb);border-radius:var(--rl);padding:16px;margin-bottom:16px">
+        <div class="lbl" style="margin-bottom:10px">数据状态</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--mu)">条目总数</span>
+          <span style="font-size:15px;font-weight:500;color:var(--w)" id="mine-count">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--mu)">最后保存</span>
+          <span style="font-size:12px;color:var(--gold2)" id="mine-saved">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:var(--mu)">存储位置</span>
+          <span style="font-size:12px;color:var(--mu)">本设备浏览器</span>
+        </div>
+      </div>
+
+      <!-- 导出 -->
+      <div style="margin-bottom:12px">
+        <div class="lbl" style="margin-bottom:8px">导出数据</div>
+        <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">将所有条目导出为文件，可发给自己，在其他设备上导入恢复。</div>
+        <div class="primary-btn" onclick="exportData()">📤 导出数据文件</div>
+      </div>
+
+      <div style="height:0.5px;background:var(--gb);margin:16px 0"></div>
+
+      <!-- 导入 -->
+      <div style="margin-bottom:12px">
+        <div class="lbl" style="margin-bottom:8px">导入数据</div>
+        <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">选择之前导出的文件，将覆盖当前所有数据，操作前建议先导出备份。</div>
+        <div style="background:var(--bg3);border:0.5px dashed var(--gb2);border-radius:var(--rl);padding:18px;text-align:center;cursor:pointer" onclick="document.getElementById('import-file').click()">
+          <div style="font-size:24px;margin-bottom:6px">📥</div>
+          <div style="font-size:13px;color:var(--gold2)">点击选择文件</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:4px">.json 格式</div>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)"/>
+      </div>
+
+      <div style="height:0.5px;background:var(--gb);margin:16px 0"></div>
+
+      <!-- 清除缓存 -->
+      <div style="margin-bottom:24px">
+        <div class="lbl" style="margin-bottom:8px">重置数据</div>
+        <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">清除本设备所有缓存，恢复为内置初始数据。操作不可撤销。</div>
+        <div style="width:100%;padding:12px;border-radius:var(--rl);background:var(--redbg);border:0.5px solid var(--redborder);font-size:14px;color:var(--redtext);cursor:pointer;text-align:center" onclick="resetData()">🗑 清除缓存恢复初始</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="nav">
+    <div class="ni" onclick="goTo('p-home')">
+      <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      <span>全部</span>
+    </div>
+    <div class="ni" onclick="goTo('p-report')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
+      <span>周报</span>
+    </div>
+    <div class="ni" onclick="goTo('p-calendar')">
+      <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
+      <span>日历</span>
+    </div>
+    <div class="ni on">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span>我的</span>
     </div>
@@ -1027,6 +1108,7 @@ function goTo(id){
   if(id==='p-report')renderReport();
   if(id==='p-add')initAddPage();
   if(id==='p-calendar')renderCalendar();
+  if(id==='p-mine')updateMineStats();
 }
 function goBack(){
   const cur=pageStack.pop();
@@ -1520,10 +1602,119 @@ function calSelDate(y,mo,d){
 }
 
 // ══════════════════════════════════════════════
+// 本地存储 & 持久化
+// ══════════════════════════════════════════════
+const STORAGE_KEY = 'sunny_calendar_items';
+const STORAGE_META = 'sunny_calendar_meta';
+
+function saveToLocal(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ITEMS));
+    localStorage.setItem(STORAGE_META, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      count: ITEMS.length
+    }));
+  }catch(e){console.warn('保存失败',e);}
+}
+
+function loadFromLocal(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed=JSON.parse(raw);
+      if(Array.isArray(parsed)&&parsed.length>0){
+        ITEMS.length=0;
+        parsed.forEach(item=>ITEMS.push(item));
+        return true;
+      }
+    }
+  }catch(e){console.warn('读取失败',e);}
+  return false;
+}
+
+// 导出数据
+function exportData(){
+  const data={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    items:ITEMS
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date();
+  a.download=`sunny-calendar-${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}.json`;
+  a.href=url;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出数据文件');
+}
+
+// 导入数据
+function importData(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const items=data.items||data; // 兼容直接数组或包装格式
+      if(!Array.isArray(items)||items.length===0){toast('文件格式不正确');return;}
+      if(!confirm(`确认导入 ${items.length} 条数据？当前数据将被覆盖。`))return;
+      ITEMS.length=0;
+      items.forEach(item=>ITEMS.push(item));
+      saveToLocal();
+      renderHome();
+      updateMineStats();
+      toast(`已导入 ${items.length} 条数据`);
+    }catch(err){toast('文件解析失败，请检查格式');}
+  };
+  reader.readAsText(file);
+  input.value=''; // 允许重复导入同一文件
+}
+
+// 重置为内置数据
+function resetData(){
+  if(!confirm('确认清除所有本地数据，恢复为内置初始数据？此操作不可撤销。'))return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_META);
+  location.reload();
+}
+
+// 更新「我的」页面统计
+function updateMineStats(){
+  const el=document.getElementById('mine-count');
+  const el2=document.getElementById('mine-saved');
+  if(el)el.textContent=ITEMS.length+'条';
+  try{
+    const meta=JSON.parse(localStorage.getItem(STORAGE_META)||'{}');
+    if(meta.savedAt&&el2){
+      const d=new Date(meta.savedAt);
+      el2.textContent=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+  }catch(e){}
+}
+
+// ── 所有数据变更操作后自动保存 ──────────────────
+// 包装 toggleDone / confirmDelete / saveDetail / saveNew / pillDone
+const _origToggleDone=toggleDone;
+toggleDone=function(idx){_origToggleDone(idx);saveToLocal();};
+const _origConfirmDelete=confirmDelete;
+confirmDelete=function(){_origConfirmDelete();saveToLocal();};
+const _origSaveDetail=saveDetail;
+saveDetail=function(){_origSaveDetail();saveToLocal();};
+const _origSaveNew=saveNew;
+saveNew=function(){_origSaveNew();saveToLocal();};
+const _origPillDone=pillDone;
+pillDone=function(idx){_origPillDone(idx);saveToLocal();};
+
+// ══════════════════════════════════════════════
 // 初始化
 // ══════════════════════════════════════════════
+loadFromLocal(); // 优先从本地读取，否则用内置数据
 pageStack=['p-home'];
 renderHome();
+saveToLocal(); // 首次启动保存一次（内置数据入库）
 </script>
 </body>
 </html>
