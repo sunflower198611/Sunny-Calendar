@@ -232,14 +232,14 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
 .sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .sec-lbl{font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
 .sec-line{flex:1;height:0.5px;background:var(--gb)}
-.day-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--bg4);background:var(--bg2);margin-bottom:5px}
+.day-item{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--bg4);background:var(--bg2);margin-bottom:5px}
 .day-item.urgent{border-color:var(--redborder);background:var(--redbg)}
 .day-item.soon{border-color:var(--amberborder);background:var(--amberbg)}
-.day-n{font-size:13px;font-weight:500;color:var(--mu);text-align:center;line-height:1.2}
-.di-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-n{font-size:11px;font-weight:500;color:var(--mu);text-align:center;line-height:1.4;word-break:break-all;min-width:0}
+.di-name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .day-item.urgent .di-name{color:#f5a79e}
 .day-item.soon .di-name{color:#e8c96a}
-.di-cat{font-size:10px;color:var(--mu)}
+.di-cat{font-size:10px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .watch-card{background:var(--bg2);border:0.5px solid var(--gb);border-radius:var(--rl);padding:14px 16px;margin:0 16px 16px}
 .watch-hd{font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
 .w-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--mu);padding:6px 0;border-bottom:0.5px solid var(--gb)}
@@ -305,19 +305,19 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
     </div>
   </div>
   <div class="nav">
-    <div class="ni on" onclick="goTo('p-home')">
+    <div class="ni on" onclick="navTo('p-home')">
       <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
       <span>全部</span>
     </div>
-    <div class="ni" onclick="goTo('p-report')">
+    <div class="ni" onclick="navTo('p-report')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
       <span>周报</span>
     </div>
-    <div class="ni" onclick="goTo('p-calendar')">
+    <div class="ni" onclick="navTo('p-calendar')">
       <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
       <span>日历</span>
     </div>
-    <div class="ni" onclick="goTo('p-mine')">
+    <div class="ni" onclick="navTo('p-mine')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span>我的</span>
     </div>
@@ -619,7 +619,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
     <div style="height:16px"></div>
   </div>
   <div class="nav">
-    <div class="ni" onclick="goTo('p-home')">
+    <div class="ni" onclick="navTo('p-home')">
       <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
       <span>全部</span>
     </div>
@@ -627,11 +627,11 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
       <span>周报</span>
     </div>
-    <div class="ni" onclick="goTo('p-calendar')">
+    <div class="ni" onclick="navTo('p-calendar')">
       <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
       <span>日历</span>
     </div>
-    <div class="ni" onclick="goTo('p-mine')">
+    <div class="ni" onclick="navTo('p-mine')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span>我的</span>
     </div>
@@ -668,11 +668,11 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
     </div>
   </div>
   <div class="nav">
-    <div class="ni" onclick="goTo('p-home')">
+    <div class="ni" onclick="navTo('p-home')">
       <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
       <span>全部</span>
     </div>
-    <div class="ni" onclick="goTo('p-report')">
+    <div class="ni" onclick="navTo('p-report')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
       <span>周报</span>
     </div>
@@ -680,7 +680,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
       <span>日历</span>
     </div>
-    <div class="ni" onclick="goTo('p-mine')">
+    <div class="ni" onclick="navTo('p-mine')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
       <span>我的</span>
     </div>
@@ -749,15 +749,15 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
     </div>
   </div>
   <div class="nav">
-    <div class="ni" onclick="goTo('p-home')">
+    <div class="ni" onclick="navTo('p-home')">
       <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
       <span>全部</span>
     </div>
-    <div class="ni" onclick="goTo('p-report')">
+    <div class="ni" onclick="navTo('p-report')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
       <span>周报</span>
     </div>
-    <div class="ni" onclick="goTo('p-calendar')">
+    <div class="ni" onclick="navTo('p-calendar')">
       <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
       <span>日历</span>
     </div>
@@ -784,9 +784,13 @@ const ITEMS = JSON.parse('[{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u4fe1\u7528
 // ══════════════════════════════════════════════
 const CAT_COLORS={
   '金融信用':'#c0392b','证件法律':'#c9a84c','税务合规':'#1D9E75','合同':'#0F6E56',
-  '职业发展':'#378ADD','会员权益':'#c9a84c','订阅':'#5b8dd9','健康':'#c4607a',
-  '教育':'#639922','资产':'#D85A30','出行规划':'#7F77DD','优惠券':'#BA7517',
-  '社交':'#9b7ec8','复盘':'#BA7517','家庭家居':'#888780','数字生活':'#3a9e8a'
+  '职业发展':'#378ADD','会员权益':'#c9a84c','订阅':'#5b8dd9',
+  '健康':'#c4607a','健康医疗':'#c4607a',
+  '教育':'#639922','教育成长':'#639922',
+  '资产':'#D85A30','出行规划':'#7F77DD','优惠券':'#BA7517',
+  '社交':'#9b7ec8','社交生活':'#9b7ec8',
+  '复盘':'#BA7517','家庭家居':'#888780','数字生活':'#3a9e8a',
+  '个人卫生':'#5ba08a','假期规划':'#7F77DD'
 };
 const UL={r:'紧急',a:'即将',g:'正常'};
 const UC={r:'bdg-r',a:'bdg-a',g:'bdg-g'};
@@ -1040,23 +1044,62 @@ function getTrigVals(pfx){
 // ══════════════════════════════════════════════
 // 页面导航
 // ══════════════════════════════════════════════
+// ── 所有页面列表
+const ALL_PAGES=['p-home','p-detail','p-add','p-report','p-calendar','p-mine'];
+
+function showPage(id){
+  ALL_PAGES.forEach(pid=>{
+    const el=document.getElementById(pid);
+    if(!el)return;
+    if(pid===id){
+      el.style.display='flex';
+      el.classList.remove('hidden','slide-left');
+    } else {
+      el.style.display='none';
+      el.classList.add('hidden');
+      el.classList.remove('slide-left');
+    }
+  });
+}
+
+// 底部tab切换：重置栈，直接显示目标页
+function navTo(id){
+  pageStack=[id];
+  showPage(id);
+  if(id==='p-report')renderReport();
+  if(id==='p-calendar')renderCalendar();
+  if(id==='p-mine')updateMineStats();
+  if(id==='p-home')renderHome();
+}
+
+// 子页面导航（详情、新建等）：push到栈上，当前页slide-left
 function goTo(id){
   const cur=pageStack[pageStack.length-1];
   if(cur===id)return;
-  if(cur)document.getElementById(cur).classList.add('slide-left');
+  if(cur){
+    const curEl=document.getElementById(cur);
+    if(curEl){curEl.classList.add('slide-left');}
+  }
   pageStack.push(id);
   const next=document.getElementById(id);
-  next.classList.remove('hidden','slide-left');
+  if(next){next.style.display='flex';next.classList.remove('hidden','slide-left');}
   if(id==='p-report')renderReport();
   if(id==='p-add')initAddPage();
   if(id==='p-calendar')renderCalendar();
   if(id==='p-mine')updateMineStats();
 }
+
 function goBack(){
   const cur=pageStack.pop();
-  if(cur)document.getElementById(cur).classList.add('hidden');
+  if(cur){
+    const curEl=document.getElementById(cur);
+    if(curEl){curEl.style.display='none';curEl.classList.add('hidden');curEl.classList.remove('slide-left');}
+  }
   const prev=pageStack[pageStack.length-1];
-  if(prev){document.getElementById(prev).classList.remove('slide-left','hidden');}
+  if(prev){
+    const prevEl=document.getElementById(prev);
+    if(prevEl){prevEl.style.display='flex';prevEl.classList.remove('slide-left','hidden');}
+  }
   if(prev==='p-home')renderHome();
 }
 
@@ -1502,6 +1545,21 @@ function saveNew(){
 // ══════════════════════════════════════════════
 // PAGE 4: 周报
 // ══════════════════════════════════════════════
+function fmtDate(s){
+  if(!s||s==='—')return '—';
+  // 每月X日 → 月/日
+  let m=s.match(/每月(\d+)[日号]/);
+  if(m)return `每月\n${m[1]}日`;
+  // YYYY/MM/DD → MM/DD
+  m=s.match(/\d{4}[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(m)return `${m[1]}/${m[2]}`;
+  // MM/DD
+  m=s.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if(m)return s;
+  // 超过6个字截断
+  if(s.length>6)return s.slice(0,5)+'…';
+  return s;
+}
 function renderReport(){
   const today=new Date();
   const end=new Date(today);end.setDate(end.getDate()+14);
@@ -1516,7 +1574,7 @@ function renderReport(){
   const dateItems=ITEMS.filter(d=>d.u==='r'||d.u==='a').slice(0,10);
   document.getElementById('rpt-list').innerHTML=dateItems.map(item=>`
     <div class="day-item ${item.u==='r'?'urgent':item.u==='a'?'soon':''}">
-      <div class="day-n">${item.date||'—'}</div>
+      <div class="day-n">${fmtDate(item.date)}</div>
       <div><div class="di-name">${item.name}</div><div class="di-cat">${item.cat}</div></div>
       <span class="badge ${UC[item.u]}">${UL[item.u]}</span>
     </div>`).join('');
@@ -1641,6 +1699,8 @@ function calSelDate(y,mo,d){
 // ══════════════════════════════════════════════
 const STORAGE_KEY = 'sunny_calendar_items';
 const STORAGE_META = 'sunny_calendar_meta';
+const STORAGE_VER = 'sunny_calendar_ver';
+const CURRENT_VER = '2'; // 每次重大数据结构变更时递增
 
 function saveToLocal(){
   try{
@@ -1649,22 +1709,26 @@ function saveToLocal(){
       savedAt: new Date().toISOString(),
       count: ITEMS.length
     }));
+    localStorage.setItem(STORAGE_VER, CURRENT_VER);
   }catch(e){console.warn('保存失败',e);}
 }
 
 function loadFromLocal(){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      const parsed=JSON.parse(raw);
-      if(Array.isArray(parsed) && parsed.length >= 5){
-        ITEMS.length=0;
-        parsed.forEach(item=>ITEMS.push(item));
-        return parsed.length; // 返回条数
-      }
-    }
-  }catch(e){console.warn('读取失败',e);}
-  return 0; // 本地无有效数据
+    const raw = localStorage.getItem(STORAGE_KEY);
+    // 本地没有数据 → 返回0，调用方会用内置数据
+    if(!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if(!Array.isArray(parsed) || parsed.length < 5) return 0;
+    // 有数据就直接用，同时把版本号补写上
+    ITEMS.length = 0;
+    parsed.forEach(item => ITEMS.push(item));
+    localStorage.setItem(STORAGE_VER, CURRENT_VER);
+    return parsed.length;
+  }catch(e){
+    console.warn('读取失败，使用内置数据', e);
+    return 0;
+  }
 }
 
 // 导出数据
@@ -1830,10 +1894,11 @@ function removeAttachD(i){dAttachments.splice(i,1);renderAttachmentsD();}
 // 尝试从本地读取（本地有数据则覆盖内置125条）
 const _localCount = loadFromLocal();
 if (_localCount === 0) {
-  saveToLocal(); // 首次使用，把内置数据存入本地
+  saveToLocal();
 }
-pageStack=['p-home'];
-renderHome();
+// loadFromLocal 可能替换了 ITEMS，重新生成 A_CATS
+A_CATS = [...new Set(ITEMS.map(d=>d.cat))];
+navTo('p-home');
 </script>
 </body>
 </html>
