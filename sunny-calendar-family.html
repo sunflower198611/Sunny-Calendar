@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Sunny Calendar</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e0e0e;--bg2:#161616;--bg3:#1e1e1e;--bg4:#252525;
+  --gold:#c9a84c;--gold2:#e8c96a;--gold3:#f5e0a0;--golddim:#8a6a28;
+  --gf:rgba(201,168,76,0.10);--gb:rgba(201,168,76,0.22);--gb2:rgba(201,168,76,0.50);
+  --w:#f0ece4;--mu:#777060;--dim:#3a3530;
+  --redbg:rgba(192,57,43,0.13);--redborder:rgba(192,57,43,0.35);--redtext:#e8756a;
+  --amberbg:rgba(184,133,10,0.13);--amberborder:rgba(184,133,10,0.35);--ambertext:#d4a532;
+  --greenbg:rgba(58,125,68,0.12);--greenborder:rgba(58,125,68,0.28);--greentext:#6ab87a;
+  --r:8px;--rl:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif;font-size:14px;overflow:hidden}
+
+/* ── 页面容器 ── */
+.app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.page{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .28s;will-change:transform}
+.page.hidden{transform:translateX(100%);pointer-events:none}
+.page.slide-left{transform:translateX(-30%);opacity:.5;pointer-events:none}
+
+/* ── 通用顶栏 ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:52px 16px 12px;flex-shrink:0}
+.logo{font-size:18px;font-weight:600;letter-spacing:.02em}
+.logo em{color:var(--gold);font-style:normal}
+.topbar-sub{padding:4px 16px 12px;flex-shrink:0}
+.back-btn{display:flex;align-items:center;gap:4px;font-size:14px;color:var(--mu);cursor:pointer;padding:4px 0}
+.back-btn::before{content:'‹';font-size:20px;line-height:1;margin-top:-1px}
+.page-title{font-size:16px;font-weight:500}
+.action-btn{font-size:13px;color:var(--gold2);cursor:pointer;padding:4px 0}
+.del-top-btn{font-size:12px;color:var(--redtext);cursor:pointer;padding:5px 10px;border-radius:6px;border:0.5px solid var(--redborder);background:var(--redbg)}
+
+/* ── 底部导航 ── */
+.nav{display:flex;background:var(--bg);border-top:0.5px solid var(--gb);padding:8px 0 28px;flex-shrink:0}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0}
+.ni svg{width:20px;height:20px;stroke:var(--dim);fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.ni.on svg{stroke:var(--gold)}
+.ni span{font-size:9px;color:var(--dim);transition:color .2s}
+.ni.on span{color:var(--gold)}
+
+/* ── 滚动内容区 ── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+
+/* ── 通用组件 ── */
+.lbl{font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px}
+.lbl-note{color:var(--mu);font-size:9px;letter-spacing:0;text-transform:none;margin-left:4px}
+.divider{height:0.5px;background:var(--gb);margin:4px 0}
+.seg{display:flex;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--gb);overflow:hidden}
+.si{flex:1;padding:8px 3px;text-align:center;font-size:12px;color:var(--mu);cursor:pointer;border-right:0.5px solid var(--gb)}
+.si:last-child{border-right:none}
+.si.on{background:var(--gf);color:var(--gold2)}
+.inp{width:100%;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px 12px;font-size:14px;color:var(--w);font-family:inherit;outline:none}
+.inp::placeholder{color:var(--mu)}
+.inp:focus{border-color:var(--gold)}
+.badge{font-size:10px;padding:2px 7px;border-radius:99px;white-space:nowrap;display:inline-block}
+.bdg-r{background:var(--redbg);color:var(--redtext);border:0.5px solid var(--redborder)}
+.bdg-a{background:var(--amberbg);color:var(--ambertext);border:0.5px solid var(--amberborder)}
+.bdg-g{background:var(--greenbg);color:var(--greentext);border:0.5px solid var(--greenborder)}
+.pill{font-size:11px;padding:3px 9px 3px 9px;border-radius:99px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.pill-r{background:var(--redbg);border:0.5px solid var(--redborder);color:var(--redtext)}
+.pill-a{background:var(--amberbg);border:0.5px solid var(--amberborder);color:var(--ambertext)}
+.pill-n{background:var(--bg3);border:0.5px solid var(--dim);color:var(--mu)}
+.pill-x{font-size:13px;line-height:1;cursor:pointer;opacity:.55;margin-left:1px;flex-shrink:0;transition:opacity .15s}
+.pill-x:hover{opacity:1}
+.primary-btn{width:100%;padding:13px;border-radius:var(--rl);background:var(--golddim);border:0.5px solid var(--gold);font-size:15px;font-weight:500;color:var(--gold3);cursor:pointer;text-align:center;transition:opacity .15s}
+.primary-btn:active{opacity:.8}
+.fab{width:34px;height:34px;border-radius:50%;background:var(--gf);border:0.5px solid var(--gb2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fab svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round}
+
+/* ── Toast ── */
+.toast-wrap{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:999;pointer-events:none;transition:opacity .3s}
+.toast-wrap.hidden{opacity:0}
+.toast-inner{background:var(--bg2);border:0.5px solid var(--gb);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--gold2);white-space:nowrap}
+
+/* ════════════════════════════════════
+   PAGE 1: 主界面
+   ════════════════════════════════════ */
+.tabs{display:flex;border-bottom:0.5px solid var(--gb);padding:0 14px;flex-shrink:0;overflow-x:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tab{font-size:13px;padding:8px 11px;color:var(--mu);white-space:nowrap;border-bottom:1.5px solid transparent;cursor:pointer;flex-shrink:0;transition:color .2s}
+.tab.on{color:var(--gold2);border-bottom-color:var(--gold)}
+.upcoming{margin:12px 14px 0;background:var(--bg2);border-radius:var(--rl);border:0.5px solid var(--gb);padding:11px 13px;flex-shrink:0}
+.up-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.up-t{font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase}
+.up-d{font-size:10px;color:var(--mu)}
+.up-pills{display:flex;gap:5px;flex-wrap:wrap}
+.layout{display:flex;flex:1;overflow:hidden;margin-top:12px}
+.sidebar{width:110px;flex-shrink:0;border-right:0.5px solid var(--gb);overflow-y:auto}
+.sidebar::-webkit-scrollbar{display:none}
+.s-lbl{font-size:9px;color:var(--golddim);padding:6px 10px 3px;letter-spacing:.07em;text-transform:uppercase}
+.s-item{font-size:11px;padding:7px 10px;color:var(--mu);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;line-height:1.3;transition:background .15s}
+.s-item:hover{background:var(--bg3)}
+.s-item.on{background:var(--gf);color:var(--gold2)}
+.s-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.s-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;font-size:11px}
+.s-cnt{font-size:9px;padding:1px 5px;border-radius:99px;background:var(--bg3);color:var(--mu);flex-shrink:0}
+.s-item.on .s-cnt{background:var(--gf);color:var(--golddim)}
+.s-add{font-size:10px;color:var(--golddim);padding:8px 10px;cursor:pointer}
+.main-list{flex:1;min-width:0;overflow-y:auto;padding:8px 10px}
+.main-list::-webkit-scrollbar{display:none}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font-size:10px;padding:3px 9px;border-radius:99px;border:0.5px solid var(--dim);color:var(--mu);cursor:pointer;white-space:nowrap;transition:all .15s}
+.chip.on{background:var(--gf);border-color:var(--gb2);color:var(--gold2)}
+.grp{margin-bottom:14px}
+.g-hd{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.g-line{flex:1;height:0.5px;background:var(--gb)}
+.g-lbl{font-size:9px;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+.row{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--r);border:0.5px solid var(--bg4);background:var(--bg2);margin-bottom:4px;cursor:pointer;transition:border-color .15s}
+.row:active{background:var(--bg3)}
+.row.urgent{border-color:var(--redborder);background:var(--redbg)}
+.row.soon{border-color:var(--amberborder);background:var(--amberbg)}
+.row.done-item{opacity:.45}
+.row.done-item .rn{text-decoration:line-through;color:var(--dim)}
+.chk{width:15px;height:15px;border-radius:4px;border:0.5px solid var(--dim);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.chk.on{background:var(--golddim);border-color:var(--gold)}
+.chk.on::after{content:'';display:block;width:7px;height:4px;border-left:1.5px solid var(--gold3);border-bottom:1.5px solid var(--gold3);transform:rotate(-45deg) translateY(-1px)}
+.rn{font-size:12px;color:var(--w);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.urgent .rn{color:#f5a79e}
+.row.soon .rn{color:#e8c96a}
+.rs{font-size:10px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-right{text-align:right;flex-shrink:0}
+.r-date{font-size:10px;color:var(--mu);margin-top:2px;white-space:nowrap}
+.add-row{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--golddim);border:0.5px dashed var(--gb);border-radius:var(--r);padding:9px;cursor:pointer;margin-top:4px;transition:all .15s}
+.add-row:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ════════════════════════════════════
+   PAGE 2: 条目详情/编辑
+   ════════════════════════════════════ */
+.item-head{padding:0 16px 14px;border-bottom:0.5px solid var(--gb);flex-shrink:0}
+.i-cat-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.i-cat-dot{width:6px;height:6px;border-radius:50%}
+.i-cat-txt{font-size:11px;color:var(--mu)}
+.i-name-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.i-name{font-size:18px;font-weight:500;line-height:1.3;flex:1}
+.i-info{font-size:12px;color:var(--mu);margin-top:5px}
+.quick-row{display:flex;gap:8px;padding:12px 16px;border-bottom:0.5px solid var(--gb);flex-shrink:0}
+.q-btn{flex:1;padding:8px 4px;border-radius:var(--r);border:0.5px solid var(--gb);background:var(--bg3);font-size:11px;color:var(--mu);text-align:center;cursor:pointer;transition:all .15s;line-height:1.3}
+.q-btn:active{opacity:.7}
+.q-btn.done-active{background:var(--golddim);border-color:var(--gold);color:var(--gold3)}
+.edit-form{padding:14px 16px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column}
+.rt-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.rt{font-size:12px;padding:5px 11px;border-radius:99px;border:0.5px solid var(--gb);color:var(--mu);cursor:pointer;background:var(--bg3);white-space:nowrap;transition:all .15s}
+.rt.on{background:var(--gf);border-color:var(--gb2);color:var(--gold2)}
+.rsum{font-size:11px;color:var(--mu);margin-top:6px}
+.rsum em{color:var(--gold);font-style:normal}
+.u-row{display:flex;gap:8px}
+.u-opt{flex:1;padding:9px 6px;border-radius:var(--r);border:0.5px solid var(--gb);background:var(--bg3);font-size:12px;text-align:center;cursor:pointer;color:var(--mu);transition:all .15s}
+.u-opt.sel-r{background:var(--redbg);border-color:var(--redborder);color:var(--redtext)}
+.u-opt.sel-a{background:var(--amberbg);border-color:var(--amberborder);color:var(--ambertext)}
+.u-opt.sel-g{background:var(--greenbg);border-color:var(--greenborder);color:var(--greentext)}
+.del-sheet-wrap{background:rgba(0,0,0,0.65);padding:16px;border-radius:var(--rl);margin:0 16px}
+.del-sheet{background:var(--bg2);border-radius:var(--rl);padding:18px;border:0.5px solid var(--redborder)}
+.del-title{font-size:15px;font-weight:500;margin-bottom:6px}
+.del-sub{font-size:12px;color:var(--mu);margin-bottom:16px;line-height:1.5}
+.del-confirm-btn{width:100%;padding:12px;border-radius:10px;background:var(--redbg);border:0.5px solid var(--redborder);font-size:14px;color:var(--redtext);cursor:pointer;text-align:center;margin-bottom:8px}
+.del-cancel-btn{width:100%;padding:12px;border-radius:10px;background:var(--bg3);border:0.5px solid var(--gb);font-size:14px;color:var(--mu);cursor:pointer;text-align:center}
+
+/* ════════════════════════════════════
+   PAGE 3: 录入新条目
+   ════════════════════════════════════ */
+.sub-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.sub-tag{font-size:12px;padding:4px 12px;border-radius:99px;background:var(--bg3);border:0.5px solid var(--gb);color:var(--mu);cursor:pointer;transition:all .15s}
+.sub-tag.on{background:var(--gf);border-color:var(--gb2);color:var(--gold2)}
+.trig-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tc{background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:11px 12px;cursor:pointer;transition:all .15s}
+.tc.on{background:var(--gf);border-color:var(--gb2)}
+.tc .t{font-size:13px}
+.tc .s{font-size:10px;color:var(--mu);margin-top:4px;line-height:1.4}
+.tc.on .t{color:var(--gold2)}
+.pv-card{background:var(--bg2);border:0.5px solid var(--gb);border-radius:var(--rl);padding:14px}
+.pv-hd{font-size:10px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start}
+.pv-name{font-size:15px;font-weight:500}
+.pv-meta{font-size:12px;color:var(--mu);margin-top:5px}
+.pv-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.pv-tag{font-size:11px;padding:3px 9px;border-radius:99px;background:var(--bg4);color:var(--mu);border:0.5px solid var(--dim)}
+/* 附件按钮 */
+.attach-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);font-size:12px;color:var(--gold2);cursor:pointer;flex:1;justify-content:center}
+.attach-btn:active{background:var(--gf)}
+.attach-thumb{position:relative;width:68px;height:68px}
+.attach-thumb img{width:68px;height:68px;object-fit:cover;border-radius:8px;border:0.5px solid var(--gb)}
+.attach-thumb .rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer}
+.attach-file{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);font-size:12px;color:var(--mu);cursor:pointer}
+.attach-file .rm-f{margin-left:auto;color:var(--mu);font-size:14px;padding:0 2px}
+
+/* 右滑删除 */
+.row-wrap{position:relative;overflow:hidden;border-radius:var(--rl);margin-bottom:1px}
+.row-del-bg{position:absolute;right:0;top:0;bottom:0;width:80px;background:var(--redborder);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:500;pointer-events:none}
+.row{transition:transform .2s ease;touch-action:pan-y;cursor:pointer;user-select:none}
+.row.swiped{transform:translateX(-80px)}
+.row-del-confirm{position:absolute;right:0;top:0;bottom:0;width:80px;display:flex;align-items:center;justify-content:center;background:var(--redborder);cursor:pointer;z-index:2}
+.row-del-confirm span{color:#fff;font-size:12px;font-weight:500}
+.cmb-wrap{position:relative}
+.cmb-input-row{display:flex;align-items:center;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);overflow:hidden}
+.cmb-input-row:focus-within{border-color:var(--gold)}
+.cmb-input-row input{flex:1;background:transparent;border:none;padding:10px 12px;font-size:14px;color:var(--w);font-family:inherit;outline:none}
+.cmb-input-row input::placeholder{color:var(--mu)}
+.cmb-arrow{padding:0 10px;color:var(--mu);font-size:11px;cursor:pointer;flex-shrink:0}
+.cmb-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:0.5px solid var(--gb2);border-radius:var(--r);z-index:100;max-height:200px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.cmb-dropdown.open{display:block}
+.cmb-opt{padding:10px 12px;font-size:14px;color:var(--w);cursor:pointer;transition:background .12s}
+.cmb-opt:hover,.cmb-opt.focused{background:var(--bg3)}
+.cmb-opt.selected{color:var(--gold2)}
+.cmb-opt-new{padding:10px 12px;font-size:13px;color:var(--gold);cursor:pointer;border-top:0.5px solid var(--gb)}
+.cmb-opt-new:hover{background:var(--gf)}
+.cmb-opt-empty{padding:10px 12px;font-size:13px;color:var(--mu)}
+
+.tog-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:12px 14px}
+.tog-lbl .t1{font-size:14px}
+.tog-lbl .t2{font-size:11px;color:var(--mu);margin-top:3px}
+.tog{width:44px;height:24px;border-radius:99px;background:var(--dim);border:0.5px solid var(--gb);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--golddim);border-color:var(--gold)}
+.tog-dot{width:18px;height:18px;border-radius:50%;background:var(--mu);position:absolute;top:2px;left:2px;transition:left .2s,background .2s}
+.tog.on .tog-dot{left:22px;background:var(--gold3)}
+
+/* ════════════════════════════════════
+   PAGE 4: 周报
+   ════════════════════════════════════ */
+.rpt-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
+.stat-card{background:var(--bg2);border-radius:var(--r);padding:14px;border:0.5px solid var(--gb)}
+.stat-n{font-size:30px;font-weight:500}
+.stat-n.r{color:var(--redtext)}
+.stat-n.a{color:var(--ambertext)}
+.stat-lbl{font-size:11px;color:var(--mu);margin-top:3px}
+.rpt-sec{padding:0 16px;margin-bottom:16px}
+.sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sec-lbl{font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+.sec-line{flex:1;height:0.5px;background:var(--gb)}
+.day-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--bg4);background:var(--bg2);margin-bottom:5px}
+.day-item.urgent{border-color:var(--redborder);background:var(--redbg)}
+.day-item.soon{border-color:var(--amberborder);background:var(--amberbg)}
+.day-n{font-size:13px;font-weight:500;color:var(--mu);text-align:center;line-height:1.2}
+.di-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-item.urgent .di-name{color:#f5a79e}
+.day-item.soon .di-name{color:#e8c96a}
+.di-cat{font-size:10px;color:var(--mu)}
+.watch-card{background:var(--bg2);border:0.5px solid var(--gb);border-radius:var(--rl);padding:14px 16px;margin:0 16px 16px}
+.watch-hd{font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.w-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--mu);padding:6px 0;border-bottom:0.5px solid var(--gb)}
+.w-item:last-child{border-bottom:none}
+.w-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:4px}
+/* ════════════════════════════════════
+   PAGE 5: 日历
+   ════════════════════════════════════ */
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:5px;border-radius:8px;cursor:pointer;position:relative;transition:background .12s}
+.cal-cell:hover{background:var(--bg3)}
+.cal-cell.today .cal-num{background:var(--golddim);color:var(--gold3);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-cell.selected{background:var(--gf);border:0.5px solid var(--gb2)}
+.cal-cell.other-month .cal-num{color:var(--dim)}
+.cal-cell.sunday .cal-num{color:var(--redtext)}
+.cal-cell.saturday .cal-num{color:var(--golddim)}
+.cal-num{font-size:13px;font-weight:400;line-height:1}
+.cal-dots{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;justify-content:center;max-width:100%}
+.cal-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.cal-day-row{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);border:0.5px solid var(--bg4);background:var(--bg2);margin-bottom:4px;cursor:pointer;transition:border-color .15s}
+.cal-day-row:active{background:var(--bg3)}
+.cal-day-row.urgent{border-color:var(--redborder);background:var(--redbg)}
+.cal-day-row.soon{border-color:var(--amberborder);background:var(--amberbg)}
+.done-pill{opacity:.55}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- ══════════════════════════════════
+     PAGE 1: 主界面
+     ══════════════════════════════════ -->
+<div class="page" id="p-home">
+  <div style="flex-shrink:0">
+    <div class="topbar" style="padding-bottom:8px">
+      <div class="logo">Sunny <em>Calendar</em></div>
+      <div class="fab" onclick="goTo('p-add')">
+        <svg viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on" onclick="setTab(this,'all')">全部</div>
+      <div class="tab" onclick="setTab(this,'urgent')">即将到期</div>
+      <div class="tab" onclick="setTab(this,'once')">一次性</div>
+      <div class="tab" onclick="setTab(this,'done')">已完成</div>
+    </div>
+    <div class="upcoming" style="margin-bottom:0">
+      <div class="up-hd"><span class="up-t">未来 14 天</span><span class="up-d" id="upRange"></span></div>
+      <div class="up-pills" id="upPills"></div>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="s-lbl">分类</div>
+      <div class="s-item on" id="si_all" onclick="selCat(null)">
+        <span class="s-name">全部</span><span class="s-cnt" id="cnt_all">0</span>
+      </div>
+      <div id="catList"></div>
+      <div class="s-add" onclick="goTo('p-add')">+ 新增</div>
+    </div>
+    <div class="main-list" id="mainList">
+      <div id="itemList"></div>
+      <div class="add-row" onclick="goTo('p-add')">+ 添加条目</div>
+    </div>
+  </div>
+  <div class="nav">
+    <div class="ni on" onclick="goTo('p-home')">
+      <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      <span>全部</span>
+    </div>
+    <div class="ni" onclick="goTo('p-report')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
+      <span>周报</span>
+    </div>
+    <div class="ni" onclick="goTo('p-calendar')">
+      <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
+      <span>日历</span>
+    </div>
+    <div class="ni" onclick="goTo('p-mine')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+      <span>我的</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 2: 条目详情/编辑
+     ══════════════════════════════════ -->
+<div class="page hidden" id="p-detail">
+  <div style="flex-shrink:0">
+    <div class="topbar">
+      <div class="back-btn" onclick="goBack()">返回</div>
+      <div class="page-title">条目详情</div>
+      <div class="del-top-btn" onclick="showDelConfirm()">删除</div>
+    </div>
+    <div class="item-head">
+      <div class="i-cat-row">
+        <span class="i-cat-dot" id="d-cat-dot"></span>
+        <span class="i-cat-txt" id="d-cat-txt"></span>
+      </div>
+      <div class="i-name-row">
+        <div class="i-name" id="d-name"></div>
+        <span class="badge" id="d-badge"></span>
+      </div>
+      <div class="i-info" id="d-info"></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="edit-form">
+      <!-- 大分类 -->
+      <div class="field">
+        <div class="lbl">大分类</div>
+        <div class="cmb-wrap" id="d-cat-wrap">
+          <div class="cmb-input-row">
+            <input type="text" id="d-cat-input" placeholder="搜索或选择分类…" oninput="cmbFilter('d-cat')" onfocus="cmbOpen('d-cat')" onblur="cmbBlur('d-cat')" autocomplete="off"/>
+            <span class="cmb-arrow" onmousedown="event.preventDefault();cmbToggle('d-cat')">▾</span>
+          </div>
+          <div class="cmb-dropdown" id="d-cat-dropdown"></div>
+        </div>
+      </div>
+      <!-- 子分类 -->
+      <div class="field">
+        <div class="lbl">子分类</div>
+        <div class="cmb-wrap" id="d-sub-wrap">
+          <div class="cmb-input-row">
+            <input type="text" id="d-sub-input" placeholder="搜索或选择子分类…" oninput="cmbFilter('d-sub')" onfocus="cmbOpen('d-sub')" onblur="cmbBlur('d-sub')" autocomplete="off"/>
+            <span class="cmb-arrow" onmousedown="event.preventDefault();cmbToggle('d-sub')">▾</span>
+          </div>
+          <div class="cmb-dropdown" id="d-sub-dropdown"></div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">条目名称</div>
+        <input class="inp" id="d-edit-name" placeholder="条目名称"/>
+      </div>
+      <div class="field">
+        <div class="lbl">补充说明</div>
+        <textarea class="inp" id="d-edit-info" placeholder="金额、账号、渠道…" style="min-height:60px;resize:none;word-break:break-all"></textarea>
+      </div>
+      <!-- 触发方式 -->
+      <div class="field">
+        <div class="lbl">触发方式</div>
+        <div class="trig-grid">
+          <div class="tc" id="dtc0" onclick="dSelTrig(0)"><div class="t">固定日期</div><div class="s">每年/每月某天</div></div>
+          <div class="tc" id="dtc1" onclick="dSelTrig(1)"><div class="t">倒计时</div><div class="s">距截止还剩N天</div></div>
+          <div class="tc" id="dtc2" onclick="dSelTrig(2)"><div class="t">周期循环</div><div class="s">每日/周/月/季/年</div></div>
+          <div class="tc" id="dtc3" onclick="dSelTrig(3)"><div class="t">条件触发</div><div class="s">积分/里程低于X</div></div>
+          <div class="tc" id="dtc4" onclick="dSelTrig(4)" style="grid-column:span 2"><div class="t">无日期</div><div class="s">手动查看，无固定时间点</div></div>
+        </div>
+      </div>
+      <!-- 触发方式动态字段 -->
+      <div id="d-trig-fields"></div>
+      <div class="field">
+        <div class="lbl">重复性</div>
+        <div class="seg" id="d-repeat-seg">
+          <div class="si on" onclick="dSelSeg(this,'d-repeat-seg')">重复（完成后重置）</div>
+          <div class="si" onclick="dSelSeg(this,'d-repeat-seg')">一次性（划线留存）</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">提醒频率 <span class="lbl-note">可多选</span></div>
+        <div class="seg" id="d-preset-seg" style="margin-bottom:8px">
+          <div class="si" onclick="dPreset('loose')">宽松</div>
+          <div class="si on" onclick="dPreset('standard')">标准</div>
+          <div class="si" onclick="dPreset('strict')">严密</div>
+          <div class="si" onclick="dPreset('custom')">自定义</div>
+        </div>
+        <div class="rt-wrap" id="d-rt-wrap">
+          <span class="rt" data-v="T-12M" onclick="dTogRt(this)">提前12月</span>
+          <span class="rt" data-v="T-6M" onclick="dTogRt(this)">提前6月</span>
+          <span class="rt" data-v="T-3M" onclick="dTogRt(this)">提前3月</span>
+          <span class="rt" data-v="T-1M" onclick="dTogRt(this)">提前1月</span>
+          <span class="rt" data-v="T-7D" onclick="dTogRt(this)">提前7天</span>
+          <span class="rt" data-v="T-3D" onclick="dTogRt(this)">提前3天</span>
+          <span class="rt" data-v="T-1D" onclick="dTogRt(this)">提前1天</span>
+          <span class="rt" data-v="T-0" onclick="dTogRt(this)">当天</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <div style="font-size:12px;color:var(--mu);white-space:nowrap">提前</div>
+          <input class="inp" id="d-remind-hours" type="number" min="0" step="0.5" placeholder="小时数（如1.5）" style="flex:1;padding:7px 10px;font-size:13px"/>
+          <div style="font-size:12px;color:var(--mu);white-space:nowrap">小时</div>
+        </div>
+      </div>
+      <!-- 笔记 -->
+      <div class="field">
+        <div class="lbl">笔记</div>
+        <textarea class="inp" id="d-note" placeholder="备忘、说明、注意事项…" style="min-height:72px;resize:none;word-break:break-all"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div class="attach-btn" onclick="document.getElementById('d-photo-cam').click()">
+            <svg viewBox="0 0 20 20" style="width:15px;height:15px;flex-shrink:0"><circle cx="10" cy="11" r="4"/><path d="M1 6h3l2-3h8l2 3h3v11H1z"/></svg>拍照
+          </div>
+          <div class="attach-btn" onclick="document.getElementById('d-photo-lib').click()">
+            <svg viewBox="0 0 20 20" style="width:15px;height:15px;flex-shrink:0"><rect x="2" y="4" width="16" height="13" rx="2"/><circle cx="7" cy="9" r="1.5"/><path d="M2 14l4-4 3 3 3-4 6 5"/></svg>相册
+          </div>
+          <div class="attach-btn" onclick="document.getElementById('d-file-lib').click()">
+            <svg viewBox="0 0 20 20" style="width:15px;height:15px;flex-shrink:0"><path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><polyline points="12,2 12,6 16,6"/></svg>文件
+          </div>
+        </div>
+        <input type="file" id="d-photo-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoD(this)"/>
+        <input type="file" id="d-photo-lib" accept="image/*" style="display:none" onchange="handlePhotoD(this)"/>
+        <input type="file" id="d-file-lib" accept="*/*" style="display:none" onchange="handleFileD(this)"/>
+        <div id="d-attachments" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      </div>
+      <div class="field">
+        <div class="lbl">紧急程度</div>
+        <div class="u-row">
+          <div class="u-opt" id="u-r" onclick="dSelU('r')">紧急</div>
+          <div class="u-opt" id="u-a" onclick="dSelU('a')">即将</div>
+          <div class="u-opt" id="u-g" onclick="dSelU('g')">正常</div>
+        </div>
+      </div>
+      <div id="d-del-confirm" style="display:none">
+        <div class="del-sheet-wrap">
+          <div class="del-sheet">
+            <div class="del-title">确认删除这条提醒？</div>
+            <div class="del-sub" id="d-del-name-txt"></div>
+            <div class="del-confirm-btn" onclick="confirmDelete()">确认删除</div>
+            <div class="del-cancel-btn" onclick="hideDelConfirm()">取消</div>
+          </div>
+        </div>
+      </div>
+      <div class="primary-btn" onclick="saveDetail()" style="margin-top:4px">保存修改</div>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 3: 录入新条目
+     ══════════════════════════════════ -->
+<div class="page hidden" id="p-add">
+  <div style="flex-shrink:0">
+    <div class="topbar">
+      <div class="back-btn" onclick="goBack()">返回</div>
+      <div class="page-title">新建条目</div>
+      <div class="action-btn" onclick="saveNew()">保存</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="edit-form">
+      <!-- 大分类 -->
+      <div class="field">
+        <div class="lbl">大分类</div>
+        <div class="cmb-wrap" id="a-cat-wrap">
+          <div class="cmb-input-row">
+            <input type="text" id="a-cat-input" placeholder="搜索或选择分类…" oninput="cmbFilter('a-cat');updatePv()" onfocus="cmbOpen('a-cat')" onblur="cmbBlur('a-cat')" autocomplete="off"/>
+            <span class="cmb-arrow" onmousedown="event.preventDefault();cmbToggle('a-cat')">▾</span>
+          </div>
+          <div class="cmb-dropdown" id="a-cat-dropdown"></div>
+        </div>
+      </div>
+      <!-- 子分类 -->
+      <div class="field">
+        <div class="lbl">子分类</div>
+        <div class="cmb-wrap" id="a-sub-wrap-cmb">
+          <div class="cmb-input-row">
+            <input type="text" id="a-sub-input" placeholder="搜索或选择子分类…" oninput="cmbFilter('a-sub');updatePv()" onfocus="cmbOpen('a-sub')" onblur="cmbBlur('a-sub')" autocomplete="off"/>
+            <span class="cmb-arrow" onmousedown="event.preventDefault();cmbToggle('a-sub')">▾</span>
+          </div>
+          <div class="cmb-dropdown" id="a-sub-dropdown"></div>
+        </div>
+      </div>
+      <div style="height:0.5px;background:var(--gb)"></div>
+      <div class="field">
+        <div class="lbl">条目名称</div>
+        <input class="inp" id="a-name" placeholder="例：中信银行6852 信用卡" oninput="updatePv()"/>
+      </div>
+      <div class="field">
+        <div class="lbl">补充说明</div>
+        <textarea class="inp" id="a-edit-info" placeholder="金额、账号尾号、渠道…" style="min-height:54px;resize:none;word-break:break-all" oninput="updatePv()"></textarea>
+      </div>
+      <!-- 触发方式 -->
+      <div class="field">
+        <div class="lbl">触发方式</div>
+        <div class="trig-grid">
+          <div class="tc on" id="atc0" onclick="selTrig(0)"><div class="t">固定日期</div><div class="s">每年/每月某天</div></div>
+          <div class="tc" id="atc1" onclick="selTrig(1)"><div class="t">倒计时</div><div class="s">距截止还剩N天</div></div>
+          <div class="tc" id="atc2" onclick="selTrig(2)"><div class="t">周期循环</div><div class="s">每日/周/月/季/年</div></div>
+          <div class="tc" id="atc3" onclick="selTrig(3)"><div class="t">条件触发</div><div class="s">积分/里程低于X</div></div>
+          <div class="tc" id="atc4" onclick="selTrig(4)" style="grid-column:span 2"><div class="t">无日期</div><div class="s">手动查看，无固定时间点</div></div>
+        </div>
+      </div>
+      <!-- 触发方式动态字段 -->
+      <div id="a-trig-fields"></div>
+      <div style="height:0.5px;background:var(--gb)"></div>
+      <div class="field">
+        <div class="lbl">重复性</div>
+        <div class="seg" id="a-repeat-seg">
+          <div class="si on" onclick="aSelSeg(this,'a-repeat-seg');aIsOnce=false;updatePv()">重复（完成后重置）</div>
+          <div class="si" onclick="aSelSeg(this,'a-repeat-seg');aIsOnce=true;updatePv()">一次性（划线留存）</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">提醒频率 <span class="lbl-note">可多选</span></div>
+        <div class="seg" id="a-preset-seg" style="margin-bottom:8px">
+          <div class="si" onclick="aPreset('loose')">宽松</div>
+          <div class="si on" onclick="aPreset('standard')">标准</div>
+          <div class="si" onclick="aPreset('strict')">严密</div>
+          <div class="si" onclick="aPreset('custom')">自定义</div>
+        </div>
+        <div class="rt-wrap" id="a-rt-wrap">
+          <span class="rt" data-v="T-12M" onclick="aTogRt(this)">提前12月</span>
+          <span class="rt" data-v="T-6M" onclick="aTogRt(this)">提前6月</span>
+          <span class="rt" data-v="T-3M" onclick="aTogRt(this)">提前3月</span>
+          <span class="rt" data-v="T-1M" onclick="aTogRt(this)">提前1月</span>
+          <span class="rt on" data-v="T-7D" onclick="aTogRt(this)">提前7天</span>
+          <span class="rt on" data-v="T-3D" onclick="aTogRt(this)">提前3天</span>
+          <span class="rt on" data-v="T-1D" onclick="aTogRt(this)">提前1天</span>
+          <span class="rt" data-v="T-0" onclick="aTogRt(this)">当天</span>
+        </div>
+        <div class="rsum">已选：<em id="a-rsum">T-7天 / T-3天 / T-1天</em></div>
+      </div>
+      <div style="height:0.5px;background:var(--gb)"></div>
+      <!-- 笔记 -->
+      <div class="field">
+        <div class="lbl">笔记</div>
+        <textarea class="inp" id="a-note" placeholder="金额、账号尾号、渠道、注意事项…" style="min-height:68px;resize:none;word-break:break-all"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="flex:1;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--gold2)" onclick="document.getElementById('a-photo-cam').click()">
+            📷 拍照
+          </div>
+          <div style="flex:1;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--gold2)" onclick="document.getElementById('a-photo-lib').click()">
+            🖼 相册
+          </div>
+        </div>
+        <input type="file" id="a-photo-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this,'a-photos')"/>
+        <input type="file" id="a-photo-lib" accept="image/*" style="display:none" onchange="handlePhoto(this,'a-photos')"/>
+        <div id="a-photos" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      </div>
+      <div style="height:0.5px;background:var(--gb)"></div>
+      <!-- 紧急程度（自动判断 + 可手动覆盖） -->
+      <div class="field">
+        <div class="lbl">紧急程度 <span class="lbl-note">系统自动判断，可手动调整</span></div>
+        <div style="font-size:11px;color:var(--mu);margin-bottom:8px" id="a-u-reason">根据日期自动判断</div>
+        <div class="u-row" id="a-u-row">
+          <div class="u-opt" id="au-r" onclick="aSelU('r')">紧急</div>
+          <div class="u-opt" id="au-a" onclick="aSelU('a')">即将</div>
+          <div class="u-opt on sel-g" id="au-g" onclick="aSelU('g')">正常</div>
+        </div>
+      </div>
+      <div style="height:0.5px;background:var(--gb)"></div>
+      <div class="pv-card">
+        <div class="pv-hd">预览</div>
+        <div class="pv-top">
+          <div class="pv-name" id="a-pv-name">条目名称</div>
+          <span class="badge bdg-a">即将</span>
+        </div>
+        <div class="pv-meta" id="a-pv-meta">金融信用 › 信用卡还款 · 重复</div>
+        <div class="pv-tags" id="a-pv-tags"></div>
+      </div>
+      <div class="primary-btn" onclick="saveNew()">确认保存</div>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 4: 周报
+     ══════════════════════════════════ -->
+<div class="page hidden" id="p-report">
+  <div style="flex-shrink:0">
+    <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:3px">
+      <div style="font-size:11px;color:var(--mu)" id="r-today"></div>
+      <div style="font-size:20px;font-weight:500">未来 14 天 <em style="color:var(--gold);font-size:14px;font-weight:400">全景图</em></div>
+      <div style="font-size:12px;color:var(--mu)" id="r-range"></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="rpt-stats" id="rpt-stats"></div>
+    <div class="rpt-sec">
+      <div class="sec-hd"><span class="sec-lbl">按紧急程度排列</span><span class="sec-line"></span></div>
+      <div id="rpt-list"></div>
+    </div>
+    <div class="watch-card">
+      <div class="watch-hd">本周持续关注</div>
+      <div id="watch-list"></div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  <div class="nav">
+    <div class="ni" onclick="goTo('p-home')">
+      <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      <span>全部</span>
+    </div>
+    <div class="ni on">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
+      <span>周报</span>
+    </div>
+    <div class="ni" onclick="goTo('p-calendar')">
+      <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
+      <span>日历</span>
+    </div>
+    <div class="ni" onclick="goTo('p-mine')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+      <span>我的</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 5: 日历
+     ══════════════════════════════════ -->
+<div class="page hidden" id="p-calendar">
+  <div style="flex-shrink:0">
+    <div class="topbar" style="padding-bottom:8px">
+      <div style="font-size:19px;font-weight:500" id="cal-title"></div>
+      <div style="display:flex;gap:8px">
+        <div class="fab" onclick="calMove(-1)"><svg viewBox="0 0 16 16" style="width:14px;height:14px"><polyline points="10,3 5,8 10,13" stroke="var(--gold)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="fab" onclick="calMove(1)"><svg viewBox="0 0 16 16" style="width:14px;height:14px"><polyline points="6,3 11,8 6,13" stroke="var(--gold)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);padding:0 10px 6px">
+      <div style="text-align:center;font-size:10px;color:var(--redtext);padding:2px 0">日</div>
+      <div style="text-align:center;font-size:10px;color:var(--mu);padding:2px 0">一</div>
+      <div style="text-align:center;font-size:10px;color:var(--mu);padding:2px 0">二</div>
+      <div style="text-align:center;font-size:10px;color:var(--mu);padding:2px 0">三</div>
+      <div style="text-align:center;font-size:10px;color:var(--mu);padding:2px 0">四</div>
+      <div style="text-align:center;font-size:10px;color:var(--mu);padding:2px 0">五</div>
+      <div style="text-align:center;font-size:10px;color:var(--golddim);padding:2px 0">六</div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);padding:0 10px;gap:3px"></div>
+    <div id="cal-day-detail" style="padding:12px 14px;border-top:0.5px solid var(--gb);margin-top:10px;display:none">
+      <div style="font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px" id="cal-day-label"></div>
+      <div id="cal-day-items"></div>
+    </div>
+  </div>
+  <div class="nav">
+    <div class="ni" onclick="goTo('p-home')">
+      <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      <span>全部</span>
+    </div>
+    <div class="ni" onclick="goTo('p-report')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
+      <span>周报</span>
+    </div>
+    <div class="ni on">
+      <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
+      <span>日历</span>
+    </div>
+    <div class="ni" onclick="goTo('p-mine')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+      <span>我的</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 6: 我的
+     ══════════════════════════════════ -->
+<div class="page hidden" id="p-mine">
+  <div style="flex-shrink:0">
+    <div class="topbar">
+      <div class="logo">Sunny <em>Calendar</em></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div style="padding:0 16px">
+
+      <!-- 数据状态卡片 -->
+      <div style="background:var(--bg2);border:0.5px solid var(--gb);border-radius:var(--rl);padding:16px;margin-bottom:16px">
+        <div class="lbl" style="margin-bottom:10px">数据状态</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--mu)">条目总数</span>
+          <span style="font-size:15px;font-weight:500;color:var(--w)" id="mine-count">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--mu)">最后保存</span>
+          <span style="font-size:12px;color:var(--gold2)" id="mine-saved">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:var(--mu)">存储位置</span>
+          <span style="font-size:12px;color:var(--mu)">本设备浏览器</span>
+        </div>
+      </div>
+
+      <!-- 导出 -->
+      <div style="margin-bottom:12px">
+        <div class="lbl" style="margin-bottom:8px">导出数据</div>
+        <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">将所有条目导出为文件，可发给自己，在其他设备上导入恢复。</div>
+        <div class="primary-btn" onclick="exportData()">📤 导出数据文件</div>
+      </div>
+
+      <div style="height:0.5px;background:var(--gb);margin:16px 0"></div>
+
+      <!-- 导入 -->
+      <div style="margin-bottom:12px">
+        <div class="lbl" style="margin-bottom:8px">导入数据</div>
+        <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">选择之前导出的文件，将覆盖当前所有数据，操作前建议先导出备份。</div>
+        <div style="background:var(--bg3);border:0.5px dashed var(--gb2);border-radius:var(--rl);padding:18px;text-align:center;cursor:pointer" onclick="document.getElementById('import-file').click()">
+          <div style="font-size:24px;margin-bottom:6px">📥</div>
+          <div style="font-size:13px;color:var(--gold2)">点击选择文件</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:4px">.json 格式</div>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)"/>
+      </div>
+
+      <div style="height:0.5px;background:var(--gb);margin:16px 0"></div>
+
+      <!-- 清除缓存 -->
+      <div style="margin-bottom:24px">
+        <div class="lbl" style="margin-bottom:8px">重置数据</div>
+        <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">清除本设备所有缓存，恢复为内置初始数据。操作不可撤销。</div>
+        <div style="width:100%;padding:12px;border-radius:var(--rl);background:var(--redbg);border:0.5px solid var(--redborder);font-size:14px;color:var(--redtext);cursor:pointer;text-align:center" onclick="resetData()">🗑 清除缓存恢复初始</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="nav">
+    <div class="ni" onclick="goTo('p-home')">
+      <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>
+      <span>全部</span>
+    </div>
+    <div class="ni" onclick="goTo('p-report')">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><polyline points="10,6 10,10 13,12.5"/></svg>
+      <span>周报</span>
+    </div>
+    <div class="ni" onclick="goTo('p-calendar')">
+      <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="14" rx="2"/><line x1="7" y1="2" x2="7" y2="5"/><line x1="13" y1="2" x2="13" y2="5"/><line x1="2.5" y1="8" x2="17.5" y2="8"/></svg>
+      <span>日历</span>
+    </div>
+    <div class="ni on">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="7.5" r="3.5"/><path d="M3 19c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+      <span>我的</span>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-wrap hidden" id="toast">
+  <div class="toast-inner" id="toast-msg"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// 数据
+// ══════════════════════════════════════════════
+const ITEMS = JSON.parse('[{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u4fe1\u7528\u5361\u8fd8\u6b3e","name":"\u4fe1\u7528\u5361\u8d26\u5355\u8fd8\u6b3e","info":"\u786e\u8ba4\u8d26\u6237\u4f59\u989d\u5145\u8db3","date":"\u6bcf\u670825\u65e5","type":"cycle","remind":"T-7D/T-3D/T-1D","u":"a","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u4fe1\u7528\u5361\u8fd8\u6b3e","name":"\u4fe1\u7528\u5361\u8d26\u5355\u65e5\u67e5\u770b","info":"\u6838\u5bf9\u672c\u6708\u6d88\u8d39\u660e\u7ec6","date":"\u6bcf\u67081\u65e5","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u623f\u8d37\u6708\u4f9b","name":"\u623f\u8d37\u6708\u4f9b\u6263\u6b3e","info":"\u786e\u8ba4\u94f6\u884c\u5361\u4f59\u989d\u5145\u8db3","date":"\u6bcf\u67085\u65e5","type":"cycle","remind":"T-3D/T-1D","u":"r","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u82b1\u5457\u501f\u5457","name":"\u82b1\u5457\u8fd8\u6b3e","info":"\u6bcf\u67089\u65e5\u81ea\u52a8\u8fd8\u6b3e","date":"\u6bcf\u67089\u65e5","type":"cycle","remind":"T-3D/T-1D","u":"a","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u623f\u79df\u7f34\u7eb3","name":"\u6708\u79df\u7f34\u7eb3","info":"\u63d0\u524d\u4e0e\u623f\u4e1c\u786e\u8ba4","date":"\u6bcf\u67081\u65e5","type":"cycle","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u4fdd\u9669\u7f34\u8d39","name":"\u5bff\u9669\u5e74\u8d39\u7f34\u7eb3","info":"","date":"\u6bcf\u5e741\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u4fdd\u9669\u7f34\u8d39","name":"\u533b\u7597\u9669\u5e74\u8d39\u7f34\u7eb3","info":"","date":"\u6bcf\u5e743\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u4fdd\u9669\u7f34\u8d39","name":"\u8f66\u9669\u7eed\u4fdd","info":"\u63d0\u524d\u5bf9\u6bd4\u62a5\u4ef7","date":"\u6bcf\u5e74\u5230\u671f\u524d","type":"yearly","remind":"T-1M/T-7D/T-3D","u":"a","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u7406\u8d22\u5230\u671f","name":"\u5b9a\u671f\u5b58\u6b3e\u5230\u671f","info":"\u786e\u8ba4\u662f\u5426\u7eed\u5b58\u6216\u8f6c\u8d26","date":"","type":"once","remind":"T-7D/T-1D","u":"a","done":false},{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u7406\u8d22\u5230\u671f","name":"\u57fa\u91d1\u5b9a\u6295\u68c0\u89c6","info":"\u6bcf\u5b63\u5ea6\u56de\u987e\u4e00\u6b21","date":"\u6bcf\u5b63\u5ea6","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u8eab\u4efd\u8bc1","name":"\u8eab\u4efd\u8bc1\u5230\u671f\u66f4\u6362","info":"\u63d0\u524d3\u4e2a\u6708\u53bb\u6237\u7c4d\u5730\u529e\u7406","date":"","type":"once","remind":"T-3M/T-1M/T-7D","u":"a","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u62a4\u7167","name":"\u62a4\u7167\u5230\u671f\u7eed\u7b7e","info":"\u6709\u6548\u671f\u4e0d\u8db36\u4e2a\u6708\u90e8\u5206\u56fd\u5bb6\u4e0d\u53ef\u5165\u5883","date":"","type":"once","remind":"T-6M/T-3M/T-1M","u":"a","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u7b7e\u8bc1","name":"\u7b7e\u8bc1\u5230\u671f\u786e\u8ba4","info":"\u6ce8\u610f\u505c\u7559\u671f\u4e0e\u6709\u6548\u671f\u533a\u522b","date":"","type":"once","remind":"T-1M/T-7D/T-3D","u":"r","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u7b7e\u8bc1","name":"\u7b7e\u8bc1\u7533\u8bf7\u63d0\u4ea4","info":"\u63d0\u524d\u51c6\u5907\u6750\u6599","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u9a7e\u7167","name":"\u9a7e\u7167\u5230\u671f\u6362\u8bc1","info":"6\u5e74\u6709\u6548\u671f\uff0c\u6ee112\u5206\u65b9\u53ef\u6362\u8bc1","date":"","type":"once","remind":"T-3M/T-1M/T-7D","u":"a","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u9a7e\u7167","name":"\u9a7e\u7167\u5206\u6570\u68c0\u67e5","info":"\u6bcf\u81ea\u7136\u5e74\u5ea6\u68c0\u67e5\u4e00\u6b21","date":"\u6bcf\u5e741\u6708","type":"yearly","remind":"T-0","u":"g","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u5c45\u4f4f\u8bc1","name":"\u5c45\u4f4f\u8bc1\u5e74\u5ea6\u7b7e\u6ce8","info":"\u6bcf\u5e74\u5230\u671f\u524d\u529e\u7406","date":"\u6bcf\u5e74\u5230\u671f\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u8bc1\u4ef6\u6cd5\u5f8b","sub":"\u5408\u540c\u7eed\u7b7e","name":"\u79df\u623f\u5408\u540c\u5230\u671f","info":"\u63d0\u524d2\u4e2a\u6708\u4e0e\u623f\u4e1c\u6c9f\u901a\u7eed\u7b7e","date":"","type":"once","remind":"T-2M/T-1M/T-7D","u":"a","done":false},{"cat":"\u7a0e\u52a1\u5408\u89c4","sub":"\u4e2a\u7a0e\u6c47\u7b97","name":"\u4e2a\u7a0e\u6c47\u7b97\u6e05\u7f34","info":"\u6bcf\u5e743\u67081\u65e5-6\u670830\u65e5","date":"\u6bcf\u5e743\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u7a0e\u52a1\u5408\u89c4","sub":"\u4e2a\u7a0e\u9000\u7a0e","name":"\u4e2a\u7a0e\u9000\u7a0e\u7533\u8bf7","info":"\u4e13\u9879\u9644\u52a0\u6263\u9664\u786e\u8ba4","date":"\u6bcf\u5e743\u6708","type":"yearly","remind":"T-7D","u":"g","done":false},{"cat":"\u7a0e\u52a1\u5408\u89c4","sub":"\u793e\u4fdd\u516c\u79ef\u91d1","name":"\u793e\u4fdd\u7f34\u7eb3\u786e\u8ba4","info":"\u6838\u5bf9\u4e2a\u4eba\u793e\u4fdd\u8d26\u6237","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u7a0e\u52a1\u5408\u89c4","sub":"\u793e\u4fdd\u516c\u79ef\u91d1","name":"\u516c\u79ef\u91d1\u57fa\u6570\u8c03\u6574","info":"\u901a\u5e38\u6bcf\u5e747\u6708\u8c03\u6574","date":"\u6bcf\u5e747\u6708","type":"yearly","remind":"T-1M","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u5e74\u5ea6\u4f53\u68c0","name":"\u5e74\u5ea6\u4f53\u68c0\u9884\u7ea6","info":"\u5efa\u8bae\u6bcf\u5e74\u4e00\u6b21","date":"\u6bcf\u5e74\u4f53\u68c0\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u5e74\u5ea6\u4f53\u68c0","name":"\u4f53\u68c0\u62a5\u544a\u53d6\u56de\u4e0e\u9605\u8bfb","info":"\u5173\u6ce8\u5f02\u5e38\u6307\u6807","date":"","type":"once","remind":"T-7D","u":"a","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u6162\u6027\u75c5\u590d\u8bca","name":"\u9ad8\u8840\u538b\u590d\u8bca\u5f00\u836f","info":"","date":"\u6bcf3\u4e2a\u6708","type":"cycle","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u6162\u6027\u75c5\u590d\u8bca","name":"\u7cd6\u5c3f\u75c5\u590d\u8bca","info":"","date":"\u6bcf3\u4e2a\u6708","type":"cycle","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u5904\u65b9\u836f\u7eed\u5f00","name":"\u5e38\u7528\u836f\u54c1\u5e93\u5b58\u68c0\u67e5","info":"\u5e93\u5b58\u4e0d\u8db31\u5468\u65f6\u8865\u5145","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u513f\u7ae5\u75ab\u82d7","name":"\u513f\u7ae5\u75ab\u82d7\u63a5\u79cd","info":"\u6309\u63a5\u79cd\u624b\u518c\u65f6\u95f4\u8868","date":"","type":"once","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u7259\u79d1","name":"\u53e3\u8154\u68c0\u67e5\u6d17\u7259","info":"\u5efa\u8bae\u6bcf\u534a\u5e74\u4e00\u6b21","date":"\u6bcf\u534a\u5e74","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u773c\u79d1","name":"\u89c6\u529b\u68c0\u67e5\u914d\u955c\u590d\u67e5","info":"","date":"\u6bcf\u5e74","type":"yearly","remind":"T-7D","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u8fd0\u52a8\u5065\u8eab","name":"\u5065\u8eab\u623f\u4f1a\u5458\u5230\u671f","info":"\u7eed\u8d39\u6216\u91cd\u65b0\u8bc4\u4f30","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u8fd0\u52a8\u5065\u8eab","name":"\u6bcf\u5468\u8fd0\u52a8\u8ba1\u5212\u68c0\u89c6","info":"","date":"\u6bcf\u5468\u4e00","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u8425\u517b\u5242\u8865\u5145","name":"\u7ef4\u751f\u7d20\u8865\u5145\u5242\u5e93\u5b58","info":"\u63d0\u524d\u4e00\u5468\u91c7\u8d2d","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u8425\u517b\u5242\u8865\u5145","name":"\u9499\u7247/\u9c7c\u6cb9\u5e93\u5b58\u68c0\u67e5","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u5b66\u8d39\u7f34\u7eb3","name":"\u5b66\u8d39\u7f34\u7eb3\u622a\u6b62","info":"\u903e\u671f\u53ef\u80fd\u5f71\u54cd\u9009\u8bfe","date":"\u6bcf\u5b66\u671f\u5f00\u5b66\u524d","type":"cycle","remind":"T-1M/T-7D/T-3D","u":"r","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u5b66\u8d39\u7f34\u7eb3","name":"\u8bfe\u5916\u73ed\u8d39\u7528\u7f34\u7eb3","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"a","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u8003\u8bd5\u62a5\u540d","name":"\u8003\u8bd5\u62a5\u540d\u622a\u6b62","info":"\u9519\u8fc7\u65e0\u6cd5\u8865\u62a5","date":"","type":"once","remind":"T-1M/T-7D/T-3D","u":"r","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u8003\u8bd5\u62a5\u540d","name":"\u8003\u8bd5\u65f6\u95f4\u63d0\u9192","info":"\u63d0\u524d\u786e\u8ba4\u8003\u573a\u5730\u5740","date":"","type":"once","remind":"T-7D/T-3D/T-1D","u":"r","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u9009\u8bfe\u62a5\u540d","name":"\u65b0\u5b66\u671f\u9009\u8bfe\u5f00\u653e","info":"\u70ed\u95e8\u8bfe\u7a0b\u62a2\u8bfe","date":"","type":"once","remind":"T-3D/T-1D/T-0","u":"r","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u9009\u8bfe\u62a5\u540d","name":"\u5174\u8da3\u73ed\u62a5\u540d\u622a\u6b62","info":"","date":"","type":"once","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u8bc1\u4e66\u8003\u8bd5","name":"\u804c\u4e1a\u8d44\u683c\u8bc1\u4e66\u62a5\u540d","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u8bc1\u4e66\u8003\u8bd5","name":"\u82f1\u8bed\u8bc1\u4e66\u8003\u8bd5\u62a5\u540d","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u6559\u80b2\u6210\u957f","sub":"\u9605\u8bfb\u8ba1\u5212","name":"\u6bcf\u6708\u8bfb\u4e66\u76ee\u6807\u68c0\u89c6","info":"","date":"\u6bcf\u6708\u5e95","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u6c34\u7535\u7164\u7f34\u8d39","name":"\u7535\u8d39\u7f34\u7eb3","info":"\u4f59\u989d\u4e0d\u8db3\u65f6\u63d0\u524d\u5145\u503c","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u6c34\u7535\u7164\u7f34\u8d39","name":"\u6c34\u8d39\u7f34\u7eb3","info":"","date":"\u6bcf\u5b63\u5ea6","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u6c34\u7535\u7164\u7f34\u8d39","name":"\u71c3\u6c14\u8d39\u5145\u503c","info":"\u51ac\u5b63\u7528\u91cf\u589e\u52a0\u6ce8\u610f\u53ca\u65f6\u5145\u503c","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u4f9b\u6696","name":"\u4f9b\u6696\u8d39\u7f34\u7eb3","info":"\u6bcf\u5e7410\u6708\u524d\u7f34\u7eb3","date":"\u6bcf\u5e7410\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u4f9b\u6696","name":"\u6696\u6c14\u7247\u6392\u6c14\u68c0\u67e5","info":"\u4f9b\u6696\u5b63\u521d\u68c0\u67e5","date":"\u6bcf\u5e7411\u6708","type":"yearly","remind":"T-7D","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u7269\u4e1a\u8d39","name":"\u7269\u4e1a\u8d39\u7f34\u7eb3","info":"","date":"\u6bcf\u5b63\u5ea6","type":"cycle","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u5bb6\u7535\u7ef4\u62a4","name":"\u7a7a\u8c03\u6ee4\u7f51\u6e05\u6d17","info":"\u5efa\u8bae\u6bcf\u534a\u5e74\u4e00\u6b21","date":"\u6bcf\u534a\u5e74","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u5bb6\u7535\u7ef4\u62a4","name":"\u70ed\u6c34\u5668\u5e74\u68c0","info":"\u71c3\u6c14\u70ed\u6c34\u5668\u9700\u4e13\u4e1a\u68c0\u67e5","date":"\u6bcf\u5e74","type":"yearly","remind":"T-1M","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u5bb6\u7535\u7ef4\u62a4","name":"\u6d17\u8863\u673a\u69fd\u6e05\u6d17","info":"\u5efa\u8bae\u6bcf3\u4e2a\u6708\u4e00\u6b21","date":"\u6bcf3\u4e2a\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u5b89\u5168\u68c0\u67e5","name":"\u71c3\u6c14\u6cc4\u6f0f\u68c0\u67e5","info":"\u5b9a\u671f\u68c0\u67e5\u71c3\u6c14\u7ba1\u9053","date":"\u6bcf\u5e74","type":"yearly","remind":"T-0","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u5b89\u5168\u68c0\u67e5","name":"\u6d88\u9632\u8bbe\u5907\u68c0\u67e5","info":"\u70df\u611f\u62a5\u8b66\u5668\u7535\u6c60\u66f4\u6362","date":"\u6bcf\u5e74","type":"yearly","remind":"T-0","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u79df\u7ea6\u5408\u540c","name":"\u79df\u623f\u5408\u540c\u5230\u671f","info":"\u63d0\u524d2\u4e2a\u6708\u6c9f\u901a\u7eed\u7b7e","date":"","type":"once","remind":"T-2M/T-1M/T-7D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u8bdd\u8d39\u6d41\u91cf","name":"\u624b\u673a\u8bdd\u8d39\u5145\u503c","info":"\u4f59\u989d\u4e0d\u8db3\u63d0\u524d\u5145","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u8bdd\u8d39\u6d41\u91cf","name":"\u5bbd\u5e26\u8d39\u7528\u7f34\u7eb3","info":"","date":"\u6bcf\u5e74\u5230\u671f\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u7406\u53d1\u9020\u578b","name":"\u7406\u53d1","info":"\u5efa\u8bae\u6bcf4-6\u5468\u4e00\u6b21","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u6d17\u6fa1","name":"\u6d17\u6fa1","info":"","date":"\u6bcf\u54682\u6b21","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u6d17\u811a","name":"\u6d17\u811a","info":"","date":"\u6bcf\u65e5","type":"daily","remind":"T-0","u":"g","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u6307\u7532\u62a4\u7406","name":"\u526a\u6307\u7532","info":"\u624b\u6307\u7532\u7ea62\u5468\uff0c\u811a\u8dbe\u7532\u7ea63-4\u5468","date":"\u6bcf2\u5468","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u6307\u7532\u62a4\u7406","name":"\u811a\u8dbe\u7532\u4fee\u526a","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u7406\u53d1\u9020\u578b","name":"\u67d3\u53d1/\u70eb\u53d1","info":"\u5efa\u8bae3\u4e2a\u6708\u4ee5\u4e0a\u4e00\u6b21","date":"\u6bcf3\u4e2a\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u5de5\u4f5c\u622a\u6b62","name":"\u5b63\u5ea6\u76ee\u6807\u590d\u76d8","info":"","date":"\u6bcf\u5b63\u5ea6\u672b","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u5de5\u4f5c\u622a\u6b62","name":"\u5e74\u7ec8\u7ee9\u6548\u8bc4\u4f30","info":"","date":"\u6bcf\u5e7412\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u62a5\u9500","name":"\u5dee\u65c5\u8d39\u7528\u62a5\u9500","info":"\u903e\u671f\u53ef\u80fd\u65e0\u6cd5\u62a5\u9500","date":"","type":"once","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u8bc1\u4e66","name":"\u804c\u4e1a\u8bc1\u4e66\u5e74\u68c0/\u7eed\u671f","info":"","date":"","type":"once","remind":"T-3M/T-1M","u":"a","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u7b80\u5386","name":"\u7b80\u5386\u66f4\u65b0","info":"\u5efa\u8bae\u6bcf\u534a\u5e74\u66f4\u65b0\u4e00\u6b21","date":"\u6bcf\u534a\u5e74","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u884c\u4e1a\u5927\u4f1a","name":"\u884c\u4e1a\u5cf0\u4f1a\u62a5\u540d","info":"\u63d0\u524d\u5173\u6ce8\u65e9\u9e1f\u7968","date":"","type":"once","remind":"T-1M/T-7D","u":"g","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u89c6\u9891\u4f1a\u5458","name":"\u89c6\u9891\u5e73\u53f0\u4f1a\u5458\u5230\u671f","info":"\u7231\u5947\u827a/\u4f18\u9177/\u817e\u8baf","date":"","type":"once","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u89c6\u9891\u4f1a\u5458","name":"\u97f3\u4e50\u5e73\u53f0\u4f1a\u5458\u5230\u671f","info":"","date":"","type":"once","remind":"T-7D/T-3D","u":"g","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u7535\u5546\u4f1a\u5458","name":"\u7535\u5546\u5e73\u53f0\u4f1a\u5458\u5230\u671f","info":"88VIP/\u4eac\u4e1cPLUS","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u5065\u8eab\u5361","name":"\u5065\u8eab\u5361\u5230\u671f","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u9152\u5e97\u79ef\u5206","name":"\u9152\u5e97\u79ef\u5206\u4fdd\u7ea7","info":"\u6ce8\u610f\u79ef\u5206\u6e05\u96f6\u65f6\u95f4","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u79ef\u5206\u6e05\u96f6","name":"\u4fe1\u7528\u5361\u79ef\u5206\u5230\u671f","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u505c\u8f66\u5361","name":"\u505c\u8f66\u573a\u6708\u5361\u7eed\u8d39","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u4f1a\u5458\u6743\u76ca","sub":"\u751f\u65e5\u793c","name":"\u4f1a\u5458\u751f\u65e5\u793c\u9886\u53d6","info":"\u5f53\u6708\u9886\u53d6\uff0c\u8fc7\u671f\u4f5c\u5e9f","date":"\u6bcf\u5e74\u751f\u65e5\u6708","type":"yearly","remind":"T-7D/T-0","u":"g","done":false},{"cat":"\u8ba2\u9605","sub":"\u8f6f\u4ef6\u8ba2\u9605","name":"Office/\u751f\u4ea7\u529b\u5de5\u5177\u8ba2\u9605","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u8ba2\u9605","sub":"\u8f6f\u4ef6\u8ba2\u9605","name":"\u4e91\u5b58\u50a8\u8ba2\u9605\u5230\u671f","info":"iCloud/\u767e\u5ea6\u7f51\u76d8","date":"","type":"once","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u8ba2\u9605","sub":"\u8f6f\u4ef6\u8ba2\u9605","name":"\u6740\u6bd2\u8f6f\u4ef6\u7eed\u8d39","info":"","date":"\u6bcf\u5e74","type":"yearly","remind":"T-1M/T-7D","u":"g","done":false},{"cat":"\u8ba2\u9605","sub":"\u5065\u8eab\u5361","name":"Keep/\u5065\u8eabApp\u4f1a\u5458","info":"","date":"","type":"once","remind":"T-7D/T-3D","u":"g","done":false},{"cat":"\u51fa\u884c\u89c4\u5212","sub":"\u8ba2\u7968","name":"\u8282\u5047\u65e5\u8fd4\u4e61\u8f66\u7968\u9884\u8ba2","info":"\u63d0\u524d30\u5929\u5f00\u62a2","date":"","type":"once","remind":"T-1M/T-7D/T-3D","u":"r","done":false},{"cat":"\u51fa\u884c\u89c4\u5212","sub":"\u8ba2\u7968","name":"\u5e74\u5047\u51fa\u884c\u8ba1\u5212","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"g","done":false},{"cat":"\u51fa\u884c\u89c4\u5212","sub":"\u7b7e\u6ce8","name":"\u6e2f\u6fb3\u901a\u884c\u8bc1\u7b7e\u6ce8","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u51fa\u884c\u89c4\u5212","sub":"\u62a4\u7167\u7b7e\u8bc1","name":"\u51fa\u5883\u65c5\u884c\u51c6\u5907\u6e05\u5355","info":"\u62a4\u7167/\u7b7e\u8bc1/\u4fdd\u9669/\u5916\u5e01","date":"","type":"once","remind":"T-1M/T-7D/T-3D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u5bb6\u4eba\u751f\u65e5","name":"\u914d\u5076\u751f\u65e5","info":"\u63d0\u524d\u51c6\u5907\u793c\u7269\u6216\u60ca\u559c","date":"","type":"yearly","remind":"T-7D/T-3D/T-1D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u5bb6\u4eba\u751f\u65e5","name":"\u5b69\u5b50\u751f\u65e5","info":"","date":"","type":"yearly","remind":"T-7D/T-3D/T-1D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u5bb6\u4eba\u751f\u65e5","name":"\u7236\u6bcd\u751f\u65e5","info":"","date":"","type":"yearly","remind":"T-7D/T-3D/T-1D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u91cd\u8981\u7eaa\u5ff5\u65e5","name":"\u7ed3\u5a5a\u7eaa\u5ff5\u65e5","info":"","date":"","type":"yearly","remind":"T-7D/T-3D/T-1D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u91cd\u8981\u7eaa\u5ff5\u65e5","name":"\u604b\u7231\u7eaa\u5ff5\u65e5","info":"","date":"","type":"yearly","remind":"T-3D/T-1D","u":"g","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u670b\u53cb\u751f\u65e5","name":"\u597d\u53cb\u751f\u65e5","info":"","date":"","type":"yearly","remind":"T-7D/T-1D","u":"g","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u8282\u65e5\u793c\u7269","name":"\u6625\u8282\u793c\u54c1\u51c6\u5907","info":"","date":"\u6bcf\u5e741\u6708","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u8282\u65e5\u793c\u7269","name":"\u4e2d\u79cb\u6708\u997c\u9884\u8ba2","info":"\u70ed\u95e8\u6b3e\u63d0\u524d\u9884\u8ba2","date":"\u6bcf\u5e748\u6708","type":"yearly","remind":"T-1M/T-7D","u":"g","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u4eba\u60c5\u5f80\u6765","name":"\u5a5a\u793c/\u6ee1\u6708\u5bb4\u968f\u793c","info":"","date":"","type":"once","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u8d44\u4ea7","sub":"\u7406\u8d22\u5230\u671f","name":"\u5b9a\u671f\u7406\u8d22\u5230\u671f","info":"\u786e\u8ba4\u662f\u5426\u7eed\u6295","date":"","type":"once","remind":"T-7D/T-3D/T-1D","u":"a","done":false},{"cat":"\u8d44\u4ea7","sub":"\u7406\u8d22\u5230\u671f","name":"\u56fd\u503a\u5230\u671f","info":"","date":"","type":"once","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u8d44\u4ea7","sub":"\u80a1\u7968\u57fa\u91d1","name":"\u57fa\u91d1\u5b9a\u6295\u65e5","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-1D","u":"g","done":false},{"cat":"\u8d44\u4ea7","sub":"\u623f\u4ea7","name":"\u623f\u5c4b\u79df\u91d1\u6536\u53d6","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-3D","u":"g","done":false},{"cat":"\u8d44\u4ea7","sub":"\u5916\u5e01","name":"\u5916\u6c47\u6c47\u7387\u5173\u6ce8","info":"\u51fa\u5883\u524d\u5151\u6362","date":"","type":"once","remind":"T-7D","u":"g","done":false},{"cat":"\u4f18\u60e0\u5238","sub":"\u5e73\u53f0\u5238","name":"\u7535\u5546\u5e73\u53f0\u4f18\u60e0\u5238\u5230\u671f","info":"\u6dd8\u5b9d/\u4eac\u4e1c/\u62fc\u591a\u591a","date":"","type":"once","remind":"T-3D/T-1D","u":"g","done":false},{"cat":"\u4f18\u60e0\u5238","sub":"\u5e73\u53f0\u5238","name":"\u5916\u5356\u5e73\u53f0\u7ea2\u5305\u5230\u671f","info":"","date":"","type":"once","remind":"T-1D/T-0","u":"g","done":false},{"cat":"\u4f18\u60e0\u5238","sub":"\u7ebf\u4e0b\u5238","name":"\u8d85\u5e02/\u5546\u573a\u8d2d\u7269\u5238\u5230\u671f","info":"","date":"","type":"once","remind":"T-3D/T-1D","u":"g","done":false},{"cat":"\u4f18\u60e0\u5238","sub":"\u7ebf\u4e0b\u5238","name":"\u9910\u5385\u4ee3\u91d1\u5238\u5230\u671f","info":"","date":"","type":"once","remind":"T-3D/T-1D","u":"g","done":false},{"cat":"\u5408\u540c","sub":"\u79df\u623f\u5408\u540c","name":"\u79df\u623f\u5408\u540c\u5e74\u5ea6\u7eed\u7b7e","info":"","date":"","type":"once","remind":"T-2M/T-1M/T-7D","u":"a","done":false},{"cat":"\u5408\u540c","sub":"\u57df\u540d\u7eed\u8d39","name":"\u4e2a\u4eba\u57df\u540d\u7eed\u8d39","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u5408\u540c","sub":"\u670d\u52a1\u5408\u540c","name":"\u5bb6\u653f\u670d\u52a1\u5408\u540c\u5230\u671f","info":"","date":"","type":"once","remind":"T-1M/T-7D","u":"g","done":false},{"cat":"\u590d\u76d8","sub":"\u76ee\u6807\u56de\u987e","name":"\u6708\u5ea6\u76ee\u6807\u590d\u76d8","info":"","date":"\u6bcf\u6708\u5e95","type":"cycle","remind":"T-3D","u":"g","done":false},{"cat":"\u590d\u76d8","sub":"\u76ee\u6807\u56de\u987e","name":"\u5e74\u5ea6\u76ee\u6807\u590d\u76d8","info":"","date":"\u6bcf\u5e7412\u6708","type":"yearly","remind":"T-7D","u":"g","done":false},{"cat":"\u590d\u76d8","sub":"\u8d22\u52a1\u590d\u76d8","name":"\u6708\u5ea6\u6536\u652f\u7edf\u8ba1","info":"","date":"\u6bcf\u6708\u5e95","type":"cycle","remind":"T-3D","u":"g","done":false},{"cat":"\u590d\u76d8","sub":"\u8d22\u52a1\u590d\u76d8","name":"\u5e74\u5ea6\u8d22\u52a1\u89c4\u5212","info":"","date":"\u6bcf\u5e741\u6708","type":"yearly","remind":"T-7D","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u8d26\u53f7\u5b89\u5168","name":"\u91cd\u8981\u8d26\u53f7\u5bc6\u7801\u66f4\u65b0","info":"\u5efa\u8bae\u6bcf6\u4e2a\u6708\u66f4\u6362","date":"\u6bcf\u534a\u5e74","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u8d26\u53f7\u5b89\u5168","name":"\u4e24\u6b65\u9a8c\u8bc1\u8bbe\u5907\u68c0\u67e5","info":"","date":"\u6bcf\u5e74","type":"yearly","remind":"T-0","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u4e91\u76d8","name":"\u4e91\u5b58\u50a8\u7a7a\u95f4\u68c0\u67e5","info":"\u6e05\u7406\u6216\u6269\u5bb9","date":"\u6bcf\u5b63\u5ea6","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u5907\u4efd","name":"\u624b\u673a\u6570\u636e\u5907\u4efd","info":"\u5efa\u8bae\u6bcf\u6708\u4e00\u6b21","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u5907\u4efd","name":"\u7535\u8111\u91cd\u8981\u6587\u4ef6\u5907\u4efd","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u6570\u5b57\u8d44\u4ea7","name":"\u6570\u5b57\u8d44\u4ea7\u6574\u7406","info":"\u8d26\u53f7\u5bc6\u7801\u672c\u66f4\u65b0","date":"\u6bcf\u534a\u5e74","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u5fc3\u7406\u5065\u5eb7","name":"\u5fc3\u7406\u54a8\u8be2\u9884\u7ea6","info":"\u5efa\u8bae\u5b9a\u671f\u5173\u6ce8\u5fc3\u7406\u72b6\u6001","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u8fd0\u52a8\u5065\u8eab","name":"\u8dd1\u6b65/\u6b65\u884c\u76ee\u6807\u68c0\u89c6","info":"\u6bcf\u5468\u68c0\u89c6\u8fd0\u52a8\u91cf","date":"\u6bcf\u5468","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u513f\u7ae5\u5065\u5eb7","name":"\u513f\u7ae5\u8eab\u9ad8\u4f53\u91cd\u8bb0\u5f55","info":"\u5efa\u8bae\u6bcf3\u4e2a\u6708\u8bb0\u5f55\u4e00\u6b21","date":"\u6bcf3\u4e2a\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u5065\u5eb7\u533b\u7597","sub":"\u5987\u79d1\u68c0\u67e5","name":"\u5987\u79d1\u5e74\u5ea6\u68c0\u67e5","info":"\u5bab\u9888\u764c\u7b5b\u67e5\u7b49","date":"\u6bcf\u5e74","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u5ba0\u7269","name":"\u5ba0\u7269\u75ab\u82d7\u63a5\u79cd","info":"\u72c2\u72ac\u75ab\u82d7\u6bcf\u5e74\u4e00\u6b21","date":"\u6bcf\u5e74","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u5ba0\u7269","name":"\u5ba0\u7269\u9a71\u866b","info":"\u4f53\u5916\u9a71\u866b\u6bcf\u6708\u4e00\u6b21","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u7eff\u690d","name":"\u690d\u7269\u6d47\u6c34\u65bd\u80a5","info":"","date":"\u6bcf\u5468","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u8f66\u8f86","name":"\u8f66\u8f86\u5e74\u68c0","info":"\u63d0\u524d\u9884\u7ea6\u68c0\u6d4b\u7ad9","date":"\u6bcf\u5e74","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u5bb6\u5ead\u5bb6\u5c45","sub":"\u8f66\u8f86","name":"\u8f66\u8f86\u4fdd\u517b","info":"\u6bcf5000-10000\u516c\u91cc\u4fdd\u517b\u4e00\u6b21","date":"\u6bcf\u534a\u5e74","type":"cycle","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u5bb6\u4eba\u751f\u65e5","name":"\u7236\u4eb2\u8282/\u6bcd\u4eb2\u8282","info":"\u63d0\u524d\u51c6\u5907\u793c\u7269","date":"\u6bcf\u5e74","type":"yearly","remind":"T-7D/T-3D","u":"a","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u8282\u65e5\u793c\u7269","name":"\u5723\u8bde/\u5143\u65e6\u793c\u7269\u51c6\u5907","info":"","date":"\u6bcf\u5e7412\u6708","type":"yearly","remind":"T-1M/T-7D","u":"g","done":false},{"cat":"\u793e\u4ea4\u751f\u6d3b","sub":"\u5bb6\u5ead\u805a\u4f1a","name":"\u5bb6\u5ead\u5e74\u5ea6\u65c5\u884c\u89c4\u5212","info":"","date":"\u6bcf\u5e74","type":"yearly","remind":"T-3M/T-1M","u":"g","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u8bc1\u4e66","name":"\u6ce8\u518c\u4f1a\u8ba1\u5e08/\u5f8b\u5e08\u8bc1\u5e74\u68c0","info":"","date":"\u6bcf\u5e74","type":"yearly","remind":"T-1M/T-7D","u":"a","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u5b66\u4e60\u6210\u957f","name":"\u5728\u7ebf\u8bfe\u7a0b\u5b8c\u6210\u68c0\u89c6","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u804c\u4e1a\u53d1\u5c55","sub":"\u4eba\u8109\u7ef4\u62a4","name":"\u91cd\u8981\u8054\u7cfb\u4eba\u5b9a\u671f\u8054\u7edc","info":"\u5efa\u8bae\u6bcf\u5b63\u5ea6\u4e3b\u52a8\u8054\u7cfb","date":"\u6bcf\u5b63\u5ea6","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u62a4\u80a4","name":"\u62a4\u80a4\u54c1\u5e93\u5b58\u68c0\u67e5","info":"\u9632\u6652/\u4fdd\u6e7f/\u7cbe\u534e\u7b49","date":"\u6bcf\u6708","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u4e2a\u4eba\u536b\u751f","sub":"\u62a4\u80a4","name":"\u9762\u819c/\u62a4\u80a4\u54c1\u5230\u671f\u68c0\u67e5","info":"","date":"\u6bcf\u5b63\u5ea6","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u7a0e\u52a1\u5408\u89c4","sub":"\u53d1\u7968\u7ba1\u7406","name":"\u6708\u5ea6\u53d1\u7968\u6574\u7406","info":"\u7eb8\u8d28\u53d1\u7968\u7535\u5b50\u5316\u5b58\u6863","date":"\u6bcf\u6708\u5e95","type":"cycle","remind":"T-3D","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u8bbe\u5907","name":"\u624b\u673a\u7cfb\u7edf\u66f4\u65b0","info":"\u68c0\u67e5\u662f\u5426\u6709\u91cd\u8981\u5b89\u5168\u66f4\u65b0","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u6570\u5b57\u751f\u6d3b","sub":"\u8bbe\u5907","name":"\u7535\u8111\u7cfb\u7edf\u53ca\u8f6f\u4ef6\u66f4\u65b0","info":"","date":"\u6bcf\u6708","type":"cycle","remind":"T-0","u":"g","done":false},{"cat":"\u4f18\u60e0\u5238","sub":"\u5e73\u53f0\u5238","name":"\u8bdd\u8d39\u5145\u503c\u4f18\u60e0\u5238\u4f7f\u7528","info":"","date":"","type":"once","remind":"T-3D/T-1D","u":"g","done":false},{"cat":"\u4f18\u60e0\u5238","sub":"\u5e73\u53f0\u5238","name":"\u6253\u8f66/\u51fa\u884c\u5238\u5230\u671f","info":"\u6ef4\u6ef4/\u9ad8\u5fb7","date":"","type":"once","remind":"T-1D/T-0","u":"g","done":false},{"cat":"\u590d\u76d8","sub":"\u76ee\u6807\u56de\u987e","name":"\u5b63\u5ea6OKR/\u76ee\u6807\u590d\u76d8","info":"","date":"\u6bcf\u5b63\u5ea6","type":"cycle","remind":"T-7D","u":"g","done":false},{"cat":"\u590d\u76d8","sub":"\u5065\u5eb7\u590d\u76d8","name":"\u5065\u5eb7\u6570\u636e\u6708\u5ea6\u56de\u987e","info":"\u6b65\u6570/\u7761\u7720/\u4f53\u91cd","date":"\u6bcf\u6708\u5e95","type":"cycle","remind":"T-3D","u":"g","done":false}]');
+
+// ══════════════════════════════════════════════
+// 工具 & 常量
+// ══════════════════════════════════════════════
+const CAT_COLORS={
+  '金融信用':'#c0392b','证件法律':'#c9a84c','税务合规':'#1D9E75','合同':'#0F6E56',
+  '职业发展':'#378ADD','会员权益':'#c9a84c','订阅':'#5b8dd9','健康医疗':'#c4607a',
+  '教育成长':'#639922','资产':'#D85A30','出行规划':'#7F77DD','优惠券':'#BA7517',
+  '社交生活':'#9b7ec8','复盘':'#BA7517','家庭家居':'#888780','数字生活':'#3a9e8a',
+  '个人卫生':'#5ba08a'
+};
+const UL={r:'紧急',a:'即将',g:'正常'};
+const UC={r:'bdg-r',a:'bdg-a',g:'bdg-g'};
+const VL={'T-12M':'T-12月','T-6M':'T-6月','T-3M':'T-3月','T-1M':'T-1月','T-7D':'T-7天','T-3D':'T-3天','T-1D':'T-1天','T-0':'当天'};
+const PR={loose:['T-7D','T-1D'],standard:['T-7D','T-3D','T-1D'],strict:['T-1M','T-7D','T-3D','T-1D']};
+
+let pageStack=[];
+let activeCat=null,activeTab='all',activeChip='all';
+let curIdx=-1,curU='g',curTrig=0;
+let aIsOnce=false,aCurSub='';
+let aTrig=0;
+
+// ── 分类数据（动态维护）─────────────────────────────
+const CAT_SUBS={
+  '金融信用':['信用卡还款','房贷月供','花呗借呗','房租缴纳','保险缴费','理财到期'],
+  '证件法律':['身份证','护照','签证','驾照','居住证','合同续签'],
+  '税务合规':['个税汇算','个税退税','社保公积金','发票管理'],
+  '合同':['租房合同','域名续费','服务合同'],
+  '职业发展':['工作截止','报销','证书','简历','行业大会','学习成长','人脉维护'],
+  '会员权益':['视频会员','电商会员','健身卡','酒店积分','积分清零','停车卡','生日礼'],
+  '订阅':['软件订阅','健身卡'],
+  '健康医疗':['年度体检','慢性病复诊','处方药续开','儿童疫苗','牙科','眼科','运动健身','营养剂补充','心理健康','儿童健康','妇科检查'],
+  '教育成长':['学费缴纳','考试报名','选课报名','证书考试','阅读计划'],
+  '资产':['理财到期','股票基金','房产','外币'],
+  '出行规划':['订票','签注','护照签证'],
+  '优惠券':['平台券','线下券'],
+  '社交生活':['家人生日','重要纪念日','朋友生日','节日礼物','人情往来','家庭聚会'],
+  '复盘':['目标回顾','财务复盘','健康复盘'],
+  '家庭家居':['水电煤缴费','供暖','物业费','家电维护','安全检查','租约合同','话费流量','宠物','绿植','车辆'],
+  '数字生活':['账号安全','云盘','备份','数字资产','设备'],
+  '个人卫生':['理发造型','洗澡','洗脚','指甲护理','护肤'],
+};
+// 动态维护大分类和子分类列表
+let A_CATS=['金融信用','证件法律','税务合规','合同','职业发展','会员权益','订阅','健康医疗','教育成长','资产','出行规划','优惠券','社交生活','复盘','家庭家居','数字生活','个人卫生'];
+function getCatSubList(cat){ return CAT_SUBS[cat]?[...CAT_SUBS[cat]]:[] }
+
+// ══════════════════════════════════════════════
+// 通用 Combobox 系统
+// ══════════════════════════════════════════════
+// namespace: 'a-cat' | 'a-sub' | 'd-cat' | 'd-sub'
+// 每个 namespace 需要:  #ns-input  #ns-dropdown
+// 额外需要一个外部 options getter: cmbGetOptions(ns) -> string[]
+const _cmbState={};
+
+function cmbGetOptions(ns){
+  if(ns==='a-cat'||ns==='d-cat') return [...A_CATS];
+  if(ns==='a-sub'){
+    const cat=document.getElementById('a-cat-input').value.trim();
+    const base=getCatSubList(cat);
+    // 加上已有数据中该分类下的子分类
+    const fromData=ITEMS.filter(d=>d.cat===cat).map(d=>d.sub).filter(Boolean);
+    return [...new Set([...base,...fromData])];
+  }
+  if(ns==='d-sub'){
+    const cat=document.getElementById('d-cat-input').value.trim();
+    const base=getCatSubList(cat);
+    const fromData=ITEMS.filter(d=>d.cat===cat).map(d=>d.sub).filter(Boolean);
+    return [...new Set([...base,...fromData])];
+  }
+  return [];
+}
+
+function cmbBuildDropdown(ns, showAll){
+  const input=document.getElementById(ns+'-input');
+  const dd=document.getElementById(ns+'-dropdown');
+  if(!input||!dd)return;
+  const q=showAll?'':input.value.trim().toLowerCase();
+  const opts=cmbGetOptions(ns);
+  // showAll或空query时显示全部，否则过滤
+  const filtered=q?opts.filter(o=>o.toLowerCase().includes(q)):opts;
+  let html='';
+  if(filtered.length===0 && q){
+    html+=`<div class="cmb-opt-new" onmousedown="event.preventDefault();cmbAddNew('${ns}')">+ 新增「${escHtml(input.value.trim())}」</div>`;
+  } else {
+    html=filtered.map(o=>`<div class="cmb-opt${o===input.value?' selected':''}" onmousedown="event.preventDefault();cmbSelect('${ns}','${escHtml(o)}')">${escHtml(o)}</div>`).join('');
+    if(q && !filtered.some(o=>o===input.value)){
+      html+=`<div class="cmb-opt-new" onmousedown="event.preventDefault();cmbAddNew('${ns}')">+ 新增「${escHtml(input.value.trim())}」</div>`;
+    }
+  }
+  dd.innerHTML=html||`<div class="cmb-opt-empty">暂无选项</div>`;
+}
+
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function cmbOpen(ns){
+  cmbBuildDropdown(ns, true); // 打开时显示全部选项
+  document.getElementById(ns+'-dropdown').classList.add('open');
+}
+function cmbBlur(ns){
+  setTimeout(()=>document.getElementById(ns+'-dropdown').classList.remove('open'),200);
+}
+function cmbToggle(ns){
+  const dd=document.getElementById(ns+'-dropdown');
+  if(dd.classList.contains('open')){dd.classList.remove('open');return;}
+  cmbBuildDropdown(ns, true); // 箭头点开时显示全部
+  dd.classList.add('open');
+  document.getElementById(ns+'-input').focus();
+}
+function cmbFilter(ns){
+  cmbBuildDropdown(ns, false); // 打字时按输入过滤
+  document.getElementById(ns+'-dropdown').classList.add('open');
+  if(ns==='a-cat'){cmbBuildDropdown('a-sub', true);}
+  if(ns==='d-cat'){cmbBuildDropdown('d-sub', true);}
+}
+function cmbSelect(ns,val){
+  document.getElementById(ns+'-input').value=val;
+  document.getElementById(ns+'-dropdown').classList.remove('open');
+  if(ns==='a-cat'){
+    // 同步大分类选择，刷新子分类
+    if(!A_CATS.includes(val)){A_CATS.push(val);}
+    document.getElementById('a-sub-input').value='';
+    aCurSub='';
+    cmbBuildDropdown('a-sub');
+    updatePv();
+  }
+  if(ns==='d-cat'){
+    document.getElementById('d-sub-input').value='';
+  }
+  if(ns==='a-sub'){aCurSub=val;updatePv();}
+}
+function cmbAddNew(ns){
+  const input=document.getElementById(ns+'-input');
+  const val=input.value.trim();
+  if(!val) return;
+  if(ns==='a-cat'||ns==='d-cat'){
+    if(!A_CATS.includes(val)){A_CATS.push(val);}
+    if(!CAT_SUBS[val])CAT_SUBS[val]=[];
+    if(ns==='a-cat'){document.getElementById('a-sub-input').value='';aCurSub='';updatePv();}
+  }
+  if(ns==='a-sub'||ns==='d-sub'){
+    const catNs=ns==='a-sub'?'a-cat':'d-cat';
+    const cat=document.getElementById(catNs+'-input').value.trim();
+    if(cat && CAT_SUBS[cat] && !CAT_SUBS[cat].includes(val)){CAT_SUBS[cat].push(val);}
+    if(ns==='a-sub'){aCurSub=val;updatePv();}
+  }
+  document.getElementById(ns+'-dropdown').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// 触发方式动态字段渲染
+// ══════════════════════════════════════════════
+// trig: 0=固定日期 1=倒计时 2=周期循环 3=条件触发 4=无日期
+// pfx: 'a' or 'd'
+function renderTrigFields(pfx, trig, vals){
+  vals=vals||{};
+  const el=document.getElementById(pfx+'-trig-fields');
+  let html='';
+  if(trig===0){
+    // 固定日期: 日期 + 可选时间
+    html=`<div class="field">
+      <div class="lbl">日期</div>
+      <div style="display:flex;gap:8px">
+        <input class="inp" id="${pfx}-tf-date" placeholder="如 2026/12/04 或 每月16日" style="flex:2" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
+        <input class="inp" id="${pfx}-tf-time" type="time" placeholder="HH:MM" style="flex:1;min-width:90px" value="${vals.time||''}"/>
+      </div>
+      <div style="font-size:11px;color:var(--mu);margin-top:5px">时间可选，留空表示全天提醒</div>
+    </div>`;
+  } else if(trig===1){
+    // 倒计时: 截止日期 + 可选时间
+    html=`<div class="field">
+      <div class="lbl">截止日期</div>
+      <div style="display:flex;gap:8px">
+        <input class="inp" id="${pfx}-tf-date" placeholder="如 2026/12/31" style="flex:2" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
+        <input class="inp" id="${pfx}-tf-time" type="time" placeholder="HH:MM" style="flex:1;min-width:90px" value="${vals.time||''}"/>
+      </div>
+      <div style="font-size:11px;color:var(--mu);margin-top:5px">时间可选，留空表示全天</div>
+    </div>`;
+  } else if(trig===2){
+    // 周期循环: 循环周期 → 开始日期 → 结束日期 → 具体时间 → 提前提醒
+    html=`<div class="field">
+      <div class="lbl">循环周期</div>
+      <div class="seg" id="${pfx}-cycle-seg" style="flex-wrap:wrap">
+        <div class="si" id="${pfx}-cy-daily" onclick="selCycle('${pfx}','daily')">每日</div>
+        <div class="si" id="${pfx}-cy-weekly" onclick="selCycle('${pfx}','weekly')">每周</div>
+        <div class="si" id="${pfx}-cy-monthly" onclick="selCycle('${pfx}','monthly')">每月</div>
+        <div class="si" id="${pfx}-cy-quarterly" onclick="selCycle('${pfx}','quarterly')">每季</div>
+        <div class="si" id="${pfx}-cy-yearly" onclick="selCycle('${pfx}','yearly')">每年</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="lbl">开始日期</div>
+      <input class="inp" id="${pfx}-tf-date" placeholder="如 2026/05/01" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
+    </div>
+    <div class="field">
+      <div class="lbl">结束日期 <span class="lbl-note">可选</span></div>
+      <input class="inp" id="${pfx}-tf-enddate" placeholder="如 2027/12/31" value="${escHtml(vals.enddate||'')}"/>
+    </div>
+    <div class="field">
+      <div class="lbl">具体时间 <span class="lbl-note">可选</span></div>
+      <input class="inp" id="${pfx}-tf-time" type="time" placeholder="HH:MM" value="${vals.time||''}" oninput="onCycleTimeInput('${pfx}')"/>
+    </div>
+    <div class="field" id="${pfx}-advance-hours-field" style="display:${vals.cycle==='daily'||vals.time?'flex':'none'};flex-direction:column">
+      <div class="lbl">提前提醒</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:12px;color:var(--mu);white-space:nowrap">提前</div>
+        <input class="inp" id="${pfx}-tf-advance" type="number" min="0" step="0.5" placeholder="如 0.5" style="flex:1;padding:7px 10px;font-size:13px" value="${vals.advance||''}"/>
+        <div style="font-size:12px;color:var(--mu);white-space:nowrap">小时</div>
+      </div>
+    </div>`;
+    setTimeout(()=>{
+      const cyc=vals.cycle||'weekly';
+      ['daily','weekly','monthly','quarterly','yearly'].forEach(c=>{
+        const e=document.getElementById(pfx+'-cy-'+c);
+        if(e)e.classList.toggle('on',c===cyc);
+      });
+    },0);
+  } else if(trig===3){
+    // 条件触发: 条件描述
+    html=`<div class="field">
+      <div class="lbl">条件描述</div>
+      <input class="inp" id="${pfx}-tf-date" placeholder="如：积分低于5000时提醒" value="${escHtml(vals.date||'')}"/>
+    </div>`;
+  } else {
+    // 无日期: 不显示
+    html='';
+  }
+  el.innerHTML=html;
+}
+
+function selCycle(pfx, cyc){
+  const cycs=['daily','weekly','monthly','quarterly','yearly'];
+  cycs.forEach(c=>{
+    const e=document.getElementById(pfx+'-cy-'+c);
+    if(e)e.classList.toggle('on',c===cyc);
+  });
+  // 每日 → 显示提前N小时框
+  const adv=document.getElementById(pfx+'-advance-hours-field');
+  if(adv) adv.style.display=cyc==='daily'?'flex':'none';
+}
+function onCycleTimeInput(pfx){
+  const timeVal=document.getElementById(pfx+'-tf-time').value;
+  const adv=document.getElementById(pfx+'-advance-hours-field');
+  if(adv) adv.style.display=timeVal?'flex':'none';
+}
+
+function getTrigVals(pfx){
+  const dateEl=document.getElementById(pfx+'-tf-date');
+  const enddateEl=document.getElementById(pfx+'-tf-enddate');
+  const timeEl=document.getElementById(pfx+'-tf-time');
+  const advEl=document.getElementById(pfx+'-tf-advance');
+  const cycs=['daily','weekly','monthly','quarterly','yearly'];
+  let cycle='';
+  cycs.forEach(c=>{const e=document.getElementById(pfx+'-cy-'+c);if(e&&e.classList.contains('on'))cycle=c;});
+  return {
+    date: dateEl?dateEl.value.trim():'',
+    enddate: enddateEl?enddateEl.value.trim():'',
+    time: timeEl?timeEl.value:'',
+    cycle: cycle,
+    advance: advEl?advEl.value.trim():'',
+  };
+}
+
+// ══════════════════════════════════════════════
+// 页面导航
+// ══════════════════════════════════════════════
+function goTo(id){
+  const cur=pageStack[pageStack.length-1];
+  if(cur===id)return;
+  if(cur)document.getElementById(cur).classList.add('slide-left');
+  pageStack.push(id);
+  const next=document.getElementById(id);
+  next.classList.remove('hidden','slide-left');
+  if(id==='p-report')renderReport();
+  if(id==='p-add')initAddPage();
+  if(id==='p-calendar')renderCalendar();
+  if(id==='p-mine')updateMineStats();
+}
+function goBack(){
+  const cur=pageStack.pop();
+  if(cur)document.getElementById(cur).classList.add('hidden');
+  const prev=pageStack[pageStack.length-1];
+  if(prev){document.getElementById(prev).classList.remove('slide-left','hidden');}
+  if(prev==='p-home')renderHome();
+}
+
+// ── Toast ─────────────────────────────────────
+let toastTimer;
+function toast(msg){
+  const w=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  w.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>w.classList.add('hidden'),2200);
+}
+
+// ══════════════════════════════════════════════
+// PAGE 1: 主界面
+// ══════════════════════════════════════════════
+function renderHome(){
+  buildSidebar();renderItems();renderUpcoming();
+}
+function buildSidebar(){
+  const counts={};
+  ITEMS.forEach(d=>{counts[d.cat]=(counts[d.cat]||0)+1});
+  document.getElementById('cnt_all').textContent=ITEMS.length;
+  // 用动态 A_CATS，包含用户新增的分类
+  document.getElementById('catList').innerHTML=A_CATS.map(c=>`
+    <div class="s-item${activeCat===c?' on':''}" onclick="selCat('${c}')">
+      <span class="s-dot" style="background:${CAT_COLORS[c]||'#888'}"></span>
+      <span class="s-name">${c}</span>
+      <span class="s-cnt">${counts[c]||0}</span>
+    </div>`).join('');
+  document.getElementById('si_all').classList.toggle('on',!activeCat);
+}
+function selCat(n){
+  activeCat=n;buildSidebar();renderItems();
+}
+function setTab(el,k){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');activeTab=k;renderItems();
+}
+function setChip(el,k){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');activeChip=k;renderItems();
+}
+function getFiltered(){
+  let L=activeCat?ITEMS.filter(d=>d.cat===activeCat):[...ITEMS];
+  if(activeTab==='urgent')L=L.filter(d=>d.u==='r'||d.u==='a');
+  if(activeTab==='once')L=L.filter(d=>d.type==='once');
+  if(activeTab==='done')L=L.filter(d=>d.done);
+  if(activeChip==='urgent')L=L.filter(d=>d.u==='r');
+  if(activeChip==='yearly')L=L.filter(d=>d.type==='yearly');
+  if(activeChip==='cycle')L=L.filter(d=>d.type==='cycle');
+  if(activeChip==='once')L=L.filter(d=>d.type==='once');
+  return L;
+}
+function renderItems(){
+  const list=getFiltered();
+  const grps={};
+  list.forEach(d=>{if(!grps[d.cat])grps[d.cat]=[];grps[d.cat].push(d)});
+  const el=document.getElementById('itemList');
+  if(!list.length){el.innerHTML='<div style="color:var(--mu);font-size:12px;padding:20px 0;text-align:center">暂无条目</div>';return}
+  el.innerHTML=Object.entries(grps).map(([cat,arr])=>`
+    <div class="grp">
+      <div class="g-hd"><span class="g-lbl" style="color:${CAT_COLORS[cat]||'#888'}">${cat}</span><span class="g-line"></span></div>
+      ${arr.map(item=>{
+        const idx=ITEMS.indexOf(item);
+        return`<div class="row-wrap" id="rw-${idx}">
+          <div class="row-del-bg">删除</div>
+          <div class="row${item.u==='r'?' urgent':item.u==='a'?' soon':''}${item.done?' done-item':''}" id="row-${idx}" onclick="rowClick(event,${idx})" ontouchstart="swipeStart(event,${idx})" ontouchmove="swipeMove(event,${idx})" ontouchend="swipeEnd(event,${idx})">
+            <div class="chk${item.done?' on':''}" onclick="event.stopPropagation();toggleDone(${idx})"></div>
+            <div style="min-width:0"><div class="rn">${item.name}</div><div class="rs">${item.sub}${item.info?' · '+item.info:''}</div></div>
+            <div class="r-right"><span class="badge ${UC[item.u]}">${UL[item.u]}</span><div class="r-date">${item.date||'—'}</div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+function toggleDone(idx){
+  ITEMS[idx].done=!ITEMS[idx].done;
+  refreshAll();
+  toast(ITEMS[idx].done?'已完成，划线留存':'已取消完成标记');
+}
+
+// 统一刷新所有视图
+function refreshAll(){
+  renderItems();
+  renderUpcoming();
+  // 如果周报/日历页当前可见，同步刷新
+  if(pageStack.includes('p-report')) renderReport();
+  if(pageStack.includes('p-calendar')) renderCalendar();
+  saveToLocal();
+}
+function renderUpcoming(){
+  const today=new Date();
+  const end=new Date(today);end.setDate(end.getDate()+14);
+  document.getElementById('upRange').textContent=`${today.getMonth()+1}/${today.getDate()} — ${end.getMonth()+1}/${end.getDate()}`;
+  const urgent=ITEMS.filter(d=>d.u==='r'||d.u==='a').slice(0,6);
+  document.getElementById('upPills').innerHTML=urgent.map((d,i)=>{
+    const realIdx=ITEMS.indexOf(d);
+    return`<span class="pill ${d.u==='r'?'pill-r':d.u==='a'?'pill-a':'pill-n'}${d.done?' done-pill':''}">
+      <span style="${d.done?'text-decoration:line-through;opacity:.5':''}">${d.name}${d.date?' · '+d.date:''}</span>
+      <span class="pill-x" onclick="event.stopPropagation();pillDone(${realIdx})" title="标记完成">×</span>
+    </span>`;
+  }).join('');
+}
+function pillDone(idx){
+  ITEMS[idx].done=true;
+  refreshAll();
+  toast('已完成：'+ITEMS[idx].name);
+}
+
+// ══════════════════════════════════════════════
+// PAGE 2: 详情/编辑
+// ══════════════════════════════════════════════
+function openDetail(idx){
+  curIdx=idx;curU=ITEMS[idx].u;
+  const d=ITEMS[idx];
+  document.getElementById('d-cat-dot').style.background=CAT_COLORS[d.cat]||'#888';
+  document.getElementById('d-cat-txt').textContent=d.cat+' › '+d.sub;
+  document.getElementById('d-name').textContent=d.name;
+  document.getElementById('d-info').textContent=d.info||'';
+  const bdg=document.getElementById('d-badge');
+  bdg.className='badge '+UC[d.u];bdg.textContent=UL[d.u];
+  document.getElementById('d-edit-name').value=d.name;
+  document.getElementById('d-edit-info').value=d.info||'';
+  document.getElementById('d-cat-input').value=d.cat||'';
+  document.getElementById('d-sub-input').value=d.sub||'';
+  // 触发方式
+  let trig=0;
+  if(d.type==='once')trig=1;
+  else if(['daily','weekly','monthly','quarterly','yearly','cycle'].includes(d.type))trig=0;
+  curTrig=trig;
+  for(let j=0;j<5;j++) document.getElementById('dtc'+j).classList.toggle('on',j===trig);
+  let tfVals={date:d.date||'',time:'',cycle:d.type==='daily'?'daily':d.type==='weekly'?'weekly':d.type==='monthly'?'monthly':d.type==='quarterly'?'quarterly':d.type==='yearly'?'yearly':'weekly'};
+  renderTrigFields('d', trig, tfVals);
+  // 提醒频率
+  const remindVals=(d.remind||'').split('/').filter(Boolean);
+  const hoursVal=remindVals.find(v=>v.startsWith('T-')&&v.endsWith('H'));
+  document.getElementById('d-remind-hours').value=hoursVal?hoursVal.replace('T-','').replace('H',''):'';
+  document.querySelectorAll('#d-rt-wrap .rt').forEach(el=>{
+    el.classList.toggle('on',remindVals.includes(el.dataset.v));
+  });
+  dUpdateRsum();
+  // 重复性
+  const repItems=document.querySelectorAll('#d-repeat-seg .si');
+  repItems.forEach(e=>e.classList.remove('on'));
+  repItems[d.type==='once'?1:0].classList.add('on');
+  dSelU(d.u);
+  // 笔记和附件
+  const noteEl=document.getElementById('d-note');
+  if(noteEl)noteEl.value=d.note||'';
+  dAttachments=d.attachments?[...d.attachments]:[];
+  renderAttachmentsD();
+  hideDelConfirm();
+  goTo('p-detail');
+}
+function dSelTrig(i){
+  curTrig=i;
+  for(let j=0;j<5;j++) document.getElementById('dtc'+j).classList.toggle('on',j===i);
+  renderTrigFields('d', i, {});
+}
+function dSelSeg(el,pid){
+  document.querySelectorAll('#'+pid+' .si').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+}
+function dTogRt(el){
+  el.classList.toggle('on');
+  document.querySelectorAll('#d-preset-seg .si').forEach((e,i)=>e.classList.toggle('on',i===3));
+  dUpdateRsum();
+}
+function dPreset(k){
+  const idx={loose:0,standard:1,strict:2,custom:3}[k];
+  document.querySelectorAll('#d-preset-seg .si').forEach((e,i)=>e.classList.toggle('on',i===idx));
+  if(k!=='custom'){const s=PR[k];document.querySelectorAll('#d-rt-wrap .rt').forEach(el=>el.classList.toggle('on',s.includes(el.dataset.v)));}
+  dUpdateRsum();
+}
+function dUpdateRsum(){
+  // 仅更新提醒标签高亮，摘要行已移除
+}
+function dSelU(u){
+  curU=u;
+  ['r','a','g'].forEach(x=>{
+    document.getElementById('u-'+x).className='u-opt'+(x===u?' sel-'+x:'');
+  });
+}
+function quickDone(){
+  if(curIdx<0)return;
+  ITEMS[curIdx].done=!ITEMS[curIdx].done;
+  const db=document.getElementById('d-done-btn');
+  db.textContent=ITEMS[curIdx].done?'已完成 ✓':'标记完成';
+  db.classList.toggle('done-active',ITEMS[curIdx].done);
+  toast(ITEMS[curIdx].done?'已标记完成，划线留存':'已取消完成标记');
+}
+function quickNudge(){toast('已触发一次即时提醒')}
+function quickSnooze(){toast('已推迟 7 天，提醒顺延')}
+function showDelConfirm(){
+  const d=ITEMS[curIdx];
+  document.getElementById('d-del-name-txt').textContent=`「${d.name}」将被永久删除，无法恢复。`;
+  document.getElementById('d-del-confirm').style.display='block';
+}
+function hideDelConfirm(){document.getElementById('d-del-confirm').style.display='none'}
+function confirmDelete(){
+  ITEMS.splice(curIdx,1);
+  toast('已删除');
+  goBack();
+  refreshAll();
+}
+function saveDetail(){
+  if(curIdx<0)return;
+  const d=ITEMS[curIdx];
+  d.cat=document.getElementById('d-cat-input').value.trim()||d.cat;
+  d.sub=document.getElementById('d-sub-input').value.trim()||d.sub;
+  d.name=document.getElementById('d-edit-name').value.trim()||d.name;
+  d.info=document.getElementById('d-edit-info').value.trim();
+  d.u=curU;
+  // 触发方式 → date / type
+  const tv=getTrigVals('d');
+  d.date=tv.date;
+  if(curTrig===2){
+    d.type=tv.cycle||'cycle';
+  } else if(curTrig===1){
+    d.type='once';
+  } else if(curTrig===3){
+    d.type='condition';
+  } else if(curTrig===4){
+    d.type='none';
+    d.date='';
+  } else {
+    d.type='cycle';
+  }
+  // 重复性覆盖
+  const repOn=document.querySelector('#d-repeat-seg .si.on');
+  const repIdx=[...document.querySelectorAll('#d-repeat-seg .si')].indexOf(repOn);
+  if(repIdx===1) d.type='once';
+  // 提醒
+  const remParts=[...document.querySelectorAll('#d-rt-wrap .rt.on')].map(e=>e.dataset.v);
+  const h=document.getElementById('d-remind-hours').value.trim();
+  if(h)remParts.push('T-'+h+'H');
+  d.remind=remParts.join('/');
+  document.getElementById('d-name').textContent=d.name;
+  document.getElementById('d-info').textContent=d.info;
+  document.getElementById('d-cat-txt').textContent=d.cat+' › '+d.sub;
+  const bdg=document.getElementById('d-badge');
+  bdg.className='badge '+UC[d.u];bdg.textContent=UL[d.u];
+  // 保存笔记和附件
+  const noteEl=document.getElementById('d-note');
+  if(noteEl)d.note=noteEl.value.trim();
+  d.attachments=[...dAttachments];
+  refreshAll();
+  toast('已保存修改');
+}
+
+// ══════════════════════════════════════════════
+// PAGE 3: 录入新条目
+// ══════════════════════════════════════════════
+function initAddPage(){
+  // 初始化 a-cat combobox
+  const firstCat=A_CATS[0]||'金融信用';
+  document.getElementById('a-cat-input').value=firstCat;
+  // 自动填入第一个子分类
+  const firstSubs=getCatSubList(firstCat);
+  aCurSub=firstSubs[0]||'';
+  document.getElementById('a-sub-input').value=aCurSub;
+  aIsOnce=false;
+  aTrig=0;
+  // 初始化触发方式
+  for(let j=0;j<5;j++) document.getElementById('atc'+j).classList.toggle('on',j===0);
+  renderTrigFields('a', 0, {});
+  // 重置提醒
+  document.querySelectorAll('#a-rt-wrap .rt').forEach((el)=>{
+    el.classList.toggle('on',['T-7D','T-3D','T-1D'].includes(el.dataset.v));
+  });
+  aUpdateRsum();
+  // 重置手动紧急程度和照片
+  aManualU=null;
+  aPhotos=[];
+  const photosEl=document.getElementById('a-photos');
+  if(photosEl)photosEl.innerHTML='';
+  // 重复性
+  const repItems=document.querySelectorAll('#a-repeat-seg .si');
+  repItems.forEach(e=>e.classList.remove('on'));
+  repItems[0].classList.add('on');
+  // 预设
+  document.querySelectorAll('#a-preset-seg .si').forEach((e,i)=>e.classList.toggle('on',i===1));
+  // 清空名称备注
+  document.getElementById('a-name').value='';
+  if(document.getElementById('a-edit-info'))document.getElementById('a-edit-info').value='';
+  document.getElementById('a-note').value='';
+  updatePv();
+}
+
+function selTrig(i){
+  aTrig=i;
+  for(let j=0;j<5;j++) document.getElementById('atc'+j).classList.toggle('on',j===i);
+  renderTrigFields('a', i, {});
+  updatePv();
+}
+function aSelSeg(el,pid){
+  document.querySelectorAll('#'+pid+' .si').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+}
+function aTogRt(el){
+  el.classList.toggle('on');
+  document.querySelectorAll('#a-preset-seg .si').forEach((e,i)=>e.classList.toggle('on',i===3));
+  aUpdateRsum();updatePv();
+}
+function aPreset(k){
+  const idx={loose:0,standard:1,strict:2,custom:3}[k];
+  document.querySelectorAll('#a-preset-seg .si').forEach((e,i)=>e.classList.toggle('on',i===idx));
+  if(k!=='custom'){const s=PR[k];document.querySelectorAll('#a-rt-wrap .rt').forEach(el=>el.classList.toggle('on',s.includes(el.dataset.v)));}
+  aUpdateRsum();updatePv();
+}
+function aUpdateRsum(){
+  const s=[...document.querySelectorAll('#a-rt-wrap .rt.on')].map(e=>VL[e.dataset.v]);
+  document.getElementById('a-rsum').textContent=s.length?s.join(' / '):'未选择';
+}
+
+// ── 照片上传 ──────────────────────────────────
+let aPhotos=[]; // base64 数组
+function handlePhoto(input, containerId){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    aPhotos.push(e.target.result);
+    renderPhotos(containerId);
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function renderPhotos(containerId){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML=aPhotos.map((src,i)=>`
+    <div style="position:relative;width:72px;height:72px">
+      <img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:0.5px solid var(--gb)"/>
+      <div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer" onclick="removePhoto(${i},'${containerId}')">×</div>
+    </div>`).join('');
+}
+function removePhoto(i, containerId){
+  aPhotos.splice(i,1);
+  renderPhotos(containerId);
+}
+
+// ── 自动紧急程度判断 ──────────────────────────
+let aManualU=null; // null=自动，否则用户手动选的
+function autoUrgency(){
+  // 根据截止日期/提醒节点判断
+  const dateEl=document.getElementById('a-tf-date');
+  const dateStr=dateEl?dateEl.value.trim():'';
+  let u='g', reason='暂无日期，默认正常';
+  if(dateStr){
+    const d=parseDateStr(dateStr);
+    if(d){
+      const today=new Date();today.setHours(0,0,0,0);
+      const diff=Math.ceil((d-today)/(1000*60*60*24));
+      if(diff<=3){u='r';reason=`距截止仅 ${diff} 天，判定为紧急`;}
+      else if(diff<=14){u='a';reason=`距截止 ${diff} 天，判定为即将`;}
+      else{u='g';reason=`距截止 ${diff} 天，判定为正常`;}
+    }
+  }
+  return{u,reason};
+}
+function parseDateStr(s){
+  let m=s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  m=s.match(/每月(\d{1,2})[日号]/);
+  if(m){
+    const today=new Date();
+    const d=+m[1];
+    let target=new Date(today.getFullYear(),today.getMonth(),d);
+    if(target<today)target.setMonth(target.getMonth()+1);
+    return target;
+  }
+  return null;
+}
+function refreshAutoUrgency(){
+  if(aManualU)return; // 用户已手动选，不覆盖
+  const {u,reason}=autoUrgency();
+  aSelUInternal(u);
+  const el=document.getElementById('a-u-reason');
+  if(el)el.textContent=reason;
+}
+function aSelU(u){
+  aManualU=u;
+  aSelUInternal(u);
+  const el=document.getElementById('a-u-reason');
+  if(el)el.textContent='已手动设置';
+}
+function aSelUInternal(u){
+  ['r','a','g'].forEach(x=>{
+    const el=document.getElementById('au-'+x);
+    if(el)el.className='u-opt'+(x===u?' sel-'+x:'');
+  });
+}
+function updatePv(){
+  const name=document.getElementById('a-name').value||'条目名称';
+  const cat=document.getElementById('a-cat-input').value||'—';
+  const sub=document.getElementById('a-sub-input').value||aCurSub||'—';
+  const tfDate=document.getElementById('a-tf-date');
+  const date=tfDate?tfDate.value:'未设定日期';
+  const tags=[...document.querySelectorAll('#a-rt-wrap .rt.on')].map(e=>VL[e.dataset.v]);
+  document.getElementById('a-pv-name').textContent=name;
+  document.getElementById('a-pv-meta').textContent=cat+' › '+sub+' · '+(aIsOnce?'一次性':'重复')+(date?' · '+date:'');
+  document.getElementById('a-pv-tags').innerHTML=tags.map(t=>`<span class="pv-tag">${t}</span>`).join('');
+  refreshAutoUrgency();
+}
+function saveNew(){
+  const name=document.getElementById('a-name').value.trim();
+  if(!name){toast('请填写条目名称');return;}
+  const cat=document.getElementById('a-cat-input').value.trim();
+  if(!cat){toast('请选择大分类');return;}
+  const sub=document.getElementById('a-sub-input').value.trim()||aCurSub;
+  const tv=getTrigVals('a');
+  let type='cycle';
+  if(aTrig===1)type='once';
+  else if(aTrig===2)type=tv.cycle||'cycle';
+  else if(aTrig===3)type='condition';
+  else if(aTrig===4)type='none';
+  const repOn=document.querySelector('#a-repeat-seg .si.on');
+  const repIdx=[...document.querySelectorAll('#a-repeat-seg .si')].indexOf(repOn);
+  if(repIdx===1)type='once';
+  const remParts=[...document.querySelectorAll('#a-rt-wrap .rt.on')].map(e=>e.dataset.v);
+  // 紧急程度：优先使用手动选择，否则自动判断
+  const finalU=aManualU||(autoUrgency().u);
+  if(!A_CATS.includes(cat))A_CATS.push(cat);
+  ITEMS.push({
+    cat,sub,name,
+    info:document.getElementById('a-edit-info')?document.getElementById('a-edit-info').value.trim():'',
+    note:document.getElementById('a-note')?document.getElementById('a-note').value.trim():'',
+    photos:[...aPhotos],
+    date:tv.date,
+    enddate:tv.enddate||'',
+    time:tv.time||'',
+    type,remind:remParts.join('/'),
+    u:finalU,done:false
+  });
+  toast('已添加：'+name);
+  goBack();refreshAll();
+}
+
+// ══════════════════════════════════════════════
+// PAGE 4: 周报
+// ══════════════════════════════════════════════
+function renderReport(){
+  const today=new Date();
+  const end=new Date(today);end.setDate(end.getDate()+14);
+  const WD=['日','一','二','三','四','五','六'];
+  document.getElementById('r-today').textContent=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日 周${WD[today.getDay()]}`;
+  document.getElementById('r-range').textContent=`${today.getMonth()+1}/${today.getDate()} — ${end.getMonth()+1}/${end.getDate()}`;
+  const urgent=ITEMS.filter(d=>d.u==='r').length;
+  const soon=ITEMS.filter(d=>d.u==='a').length;
+  document.getElementById('rpt-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-n r">${urgent}</div><div class="stat-lbl">紧急处理</div></div>
+    <div class="stat-card"><div class="stat-n a">${soon}</div><div class="stat-lbl">即将到期</div></div>`;
+  const dateItems=ITEMS.filter(d=>d.u==='r'||d.u==='a').slice(0,10);
+  document.getElementById('rpt-list').innerHTML=dateItems.map(item=>`
+    <div class="day-item ${item.u==='r'?'urgent':item.u==='a'?'soon':''}">
+      <div class="day-n">${item.date||'—'}</div>
+      <div><div class="di-name">${item.name}</div><div class="di-cat">${item.cat}</div></div>
+      <span class="badge ${UC[item.u]}">${UL[item.u]}</span>
+    </div>`).join('');
+  const WATCH_KW=['保级','积分','用药','打电话','哮喘','驱虫','汇率','定投','密码','备份'];
+  const watchItems=ITEMS.filter(d=>d.type==='cycle'&&WATCH_KW.some(k=>d.name.includes(k)||(d.info||'').includes(k))).slice(0,5);
+  const WC=['#c9a84c','#c9a84c','#888780','#888780','#3a9e8a'];
+  document.getElementById('watch-list').innerHTML=watchItems.length
+    ?watchItems.map((d,i)=>`<div class="w-item"><span class="w-dot" style="background:${WC[i]||'#888'}"></span><span>${d.name}${d.info?' — '+d.info:''}</span></div>`).join('')
+    :'<div class="w-item"><span style="color:var(--mu)">暂无需持续关注的事项</span></div>';
+}
+
+// ══════════════════════════════════════════════
+// PAGE 5: 日历
+// ══════════════════════════════════════════════
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth();
+let calSelDay=null;
+
+function calMove(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  calSelDay=null;
+  renderCalendar();
+}
+
+// 把 ITEMS 里的 date 字段尝试解析成可比较的 {y,m,d}
+// 支持格式: 2026/12/04, 2026/12, 05/26 (每年), 每月16日 → 每月标记
+function parseItemDates(item){
+  const s=item.date||'';
+  const results=[];
+  // 完整日期 YYYY/MM/DD 或 YYYY-MM-DD
+  let m=s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(m) return [{y:+m[1],mo:+m[2]-1,d:+m[3],type:'exact'}];
+  // 仅年月 YYYY/MM
+  m=s.match(/^(\d{4})[\/\-](\d{1,2})$/);
+  if(m) return [{y:+m[1],mo:+m[2]-1,d:1,type:'month'}];
+  // MM/DD 每年循环
+  m=s.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if(m) return [{mo:+m[1]-1,d:+m[2],type:'yearly'}];
+  // 每月N日
+  m=s.match(/每月(\d{1,2})[日号]/);
+  if(m) return [{d:+m[1],type:'monthly'}];
+  return results;
+}
+
+function getItemsForDay(y,mo,d){
+  return ITEMS.filter(item=>{
+    const dates=parseItemDates(item);
+    return dates.some(pd=>{
+      if(pd.type==='exact') return pd.y===y&&pd.mo===mo&&pd.d===d;
+      if(pd.type==='month') return pd.y===y&&pd.mo===mo;
+      if(pd.type==='yearly') return pd.mo===mo&&pd.d===d;
+      if(pd.type==='monthly') return pd.d===d;
+      return false;
+    });
+  });
+}
+
+function renderCalendar(){
+  document.getElementById('cal-title').textContent=`${calYear}年${calMonth+1}月`;
+  const today=new Date();
+  const firstDay=new Date(calYear,calMonth,1).getDay(); // 0=Sun
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth,0).getDate();
+
+  let cells=[];
+  // prev month fill
+  for(let i=firstDay-1;i>=0;i--){
+    cells.push({d:daysInPrev-i,mo:calMonth-1<0?11:calMonth-1,y:calMonth-1<0?calYear-1:calYear,other:true});
+  }
+  // current month
+  for(let d=1;d<=daysInMonth;d++){
+    cells.push({d,mo:calMonth,y:calYear,other:false});
+  }
+  // next month fill to complete grid rows
+  const rem=(7-cells.length%7)%7;
+  for(let d=1;d<=rem;d++){
+    cells.push({d,mo:calMonth+1>11?0:calMonth+1,y:calMonth+1>11?calYear+1:calYear,other:true});
+  }
+
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML=cells.map(c=>{
+    const isToday=c.y===today.getFullYear()&&c.mo===today.getMonth()&&c.d===today.getDate();
+    const isSel=calSelDay&&calSelDay.y===c.y&&calSelDay.mo===c.mo&&calSelDay.d===c.d;
+    const dow=new Date(c.y,c.mo,c.d).getDay();
+    const items=c.other?[]:getItemsForDay(c.y,c.mo,c.d);
+    const dots=items.slice(0,4).map(it=>`<span class="cal-dot" style="background:${CAT_COLORS[it.cat]||'#888'}"></span>`).join('');
+    return`<div class="cal-cell${c.other?' other-month':''}${isToday?' today':''}${isSel?' selected':''}${dow===0?' sunday':dow===6?' saturday':''}" 
+      onclick="calSelDate(${c.y},${c.mo},${c.d})">
+      <span class="cal-num">${c.d}</span>
+      ${dots?`<div class="cal-dots">${dots}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function calSelDate(y,mo,d){
+  calSelDay={y,mo,d};
+  renderCalendar();
+  const items=getItemsForDay(y,mo,d);
+  const detail=document.getElementById('cal-day-detail');
+  const label=document.getElementById('cal-day-label');
+  const list=document.getElementById('cal-day-items');
+  label.textContent=`${y}年${mo+1}月${d}日`;
+  if(!items.length){
+    list.innerHTML=`<div style="color:var(--mu);font-size:13px;padding:8px 0">当日无事项</div>`;
+  } else {
+    list.innerHTML=items.map(item=>{
+      const idx=ITEMS.indexOf(item);
+      return`<div class="cal-day-row${item.u==='r'?' urgent':item.u==='a'?' soon':''}" onclick="openDetail(${idx})">
+        <span class="s-dot" style="background:${CAT_COLORS[item.cat]||'#888'};width:7px;height:7px;border-radius:50%;flex-shrink:0"></span>
+        <div style="min-width:0"><div class="rn" style="font-size:13px">${item.name}</div><div class="rs">${item.sub}</div></div>
+        <span class="badge ${UC[item.u]}">${UL[item.u]}</span>
+      </div>`;
+    }).join('');
+  }
+  detail.style.display='block';
+}
+
+// ══════════════════════════════════════════════
+// 本地存储 & 持久化
+// ══════════════════════════════════════════════
+const STORAGE_KEY = 'sunny_calendar_items';
+const STORAGE_META = 'sunny_calendar_meta';
+
+function saveToLocal(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ITEMS));
+    localStorage.setItem(STORAGE_META, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      count: ITEMS.length
+    }));
+  }catch(e){console.warn('保存失败',e);}
+}
+
+function loadFromLocal(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed=JSON.parse(raw);
+      if(Array.isArray(parsed) && parsed.length >= 5){
+        ITEMS.length=0;
+        parsed.forEach(item=>ITEMS.push(item));
+        return parsed.length; // 返回条数
+      }
+    }
+  }catch(e){console.warn('读取失败',e);}
+  return 0; // 本地无有效数据
+}
+
+// 导出数据
+function exportData(){
+  const data={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    items:ITEMS
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date();
+  a.download=`sunny-calendar-${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}.json`;
+  a.href=url;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出数据文件');
+}
+
+// 导入数据
+function importData(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const items=data.items||data; // 兼容直接数组或包装格式
+      if(!Array.isArray(items)||items.length===0){toast('文件格式不正确');return;}
+      if(!confirm(`确认导入 ${items.length} 条数据？当前数据将被覆盖。`))return;
+      ITEMS.length=0;
+      items.forEach(item=>ITEMS.push(item));
+      saveToLocal();
+      renderHome();
+      updateMineStats();
+      toast(`已导入 ${items.length} 条数据`);
+    }catch(err){toast('文件解析失败，请检查格式');}
+  };
+  reader.readAsText(file);
+  input.value=''; // 允许重复导入同一文件
+}
+
+// 重置为内置数据
+function resetData(){
+  if(!confirm('确认清除所有本地数据，恢复为内置初始数据？此操作不可撤销。'))return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_META);
+  location.reload();
+}
+
+// 更新「我的」页面统计
+function updateMineStats(){
+  const el=document.getElementById('mine-count');
+  const el2=document.getElementById('mine-saved');
+  if(el)el.textContent=ITEMS.length+'条';
+  try{
+    const meta=JSON.parse(localStorage.getItem(STORAGE_META)||'{}');
+    if(meta.savedAt&&el2){
+      const d=new Date(meta.savedAt);
+      el2.textContent=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// 右滑删除
+// ══════════════════════════════════════════════
+let _swipe={idx:-1,startX:0,startY:0,moved:false,swiped:false};
+let _swipedIdx=-1; // 当前已滑开的行
+
+function rowClick(e,idx){
+  // 如果当前行是滑开状态，点击收回；否则打开详情
+  if(_swipedIdx===idx){
+    snapBack(idx);
+    return;
+  }
+  // 如果有其他行滑开，先收回
+  if(_swipedIdx>=0) snapBack(_swipedIdx);
+  openDetail(idx);
+}
+
+function swipeStart(e,idx){
+  if(e.touches.length!==1)return;
+  _swipe={idx,startX:e.touches[0].clientX,startY:e.touches[0].clientY,moved:false,swiped:_swipedIdx===idx};
+  // 如果有其他行滑开，收回
+  if(_swipedIdx>=0 && _swipedIdx!==idx) snapBack(_swipedIdx);
+}
+
+function swipeMove(e,idx){
+  if(_swipe.idx!==idx)return;
+  const dx=e.touches[0].clientX-_swipe.startX;
+  const dy=e.touches[0].clientY-_swipe.startY;
+  if(!_swipe.moved && Math.abs(dy)>Math.abs(dx)) return; // 纵向滚动，不处理
+  _swipe.moved=true;
+  e.preventDefault();
+  const row=document.getElementById('row-'+idx);
+  if(!row)return;
+  const base=_swipe.swiped?-80:0;
+  const offset=Math.min(0,Math.max(-80, base+dx));
+  row.style.transition='none';
+  row.style.transform=`translateX(${offset}px)`;
+}
+
+function swipeEnd(e,idx){
+  if(_swipe.idx!==idx||!_swipe.moved)return;
+  const dx=e.changedTouches[0].clientX-_swipe.startX;
+  const row=document.getElementById('row-'+idx);
+  if(!row)return;
+  row.style.transition='';
+  const base=_swipe.swiped?-80:0;
+  const final=base+dx;
+  if(final<-40){
+    // 滑开 → 显示删除
+    row.style.transform='translateX(-80px)';
+    row.classList.add('swiped');
+    _swipedIdx=idx;
+  } else {
+    snapBack(idx);
+  }
+}
+
+function snapBack(idx){
+  const row=document.getElementById('row-'+idx);
+  if(row){row.style.transform='';row.classList.remove('swiped');}
+  if(_swipedIdx===idx)_swipedIdx=-1;
+}
+
+function swipeDelete(idx){
+  // 点击删除背景区域时触发
+  if(_swipedIdx!==idx)return;
+  const name=ITEMS[idx].name;
+  ITEMS.splice(idx,1);
+  _swipedIdx=-1;
+  refreshAll();
+  // 撤销支持
+  _lastDeleted={item:ITEMS[idx]||null, idx, name}; // 保存以备撤销（简化版：不实现完整undo）
+  toast(`已删除「${name}」`);
+}
+
+// 给删除背景区域绑定点击（在renderItems里动态生成后通过事件委托处理）
+document.addEventListener('click', function(e){
+  const bg=e.target.closest('.row-del-bg');
+  if(!bg)return;
+  const wrap=bg.closest('.row-wrap');
+  if(!wrap)return;
+  const id=wrap.id.replace('rw-','');
+  swipeDelete(parseInt(id));
+});
+
+// ══════════════════════════════════════════════
+// 附件管理（详情页）
+// ══════════════════════════════════════════════
+let dAttachments=[]; // [{type:'image'|'file', data, name}]
+
+function handlePhotoD(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    dAttachments.push({type:'image',data:e.target.result,name:file.name});
+    renderAttachmentsD();
+  };
+  reader.readAsDataURL(file);input.value='';
+}
+function handleFileD(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    dAttachments.push({type:'file',data:e.target.result,name:file.name});
+    renderAttachmentsD();
+  };
+  reader.readAsDataURL(file);input.value='';
+}
+function renderAttachmentsD(){
+  const el=document.getElementById('d-attachments');if(!el)return;
+  el.innerHTML=dAttachments.map((a,i)=>{
+    if(a.type==='image') return`<div class="attach-thumb"><img src="${a.data}"/><div class="rm" onclick="removeAttachD(${i})">×</div></div>`;
+    return`<div class="attach-file"><svg viewBox="0 0 20 20" style="width:13px;height:13px;flex-shrink:0"><path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><polyline points="12,2 12,6 16,6"/></svg><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}</span><span class="rm-f" onclick="removeAttachD(${i})">×</span></div>`;
+  }).join('');
+}
+function removeAttachD(i){dAttachments.splice(i,1);renderAttachmentsD();}
+
+// ══════════════════════════════════════════════
+// 尝试从本地读取（本地有数据则覆盖内置125条）
+const _localCount = loadFromLocal();
+if (_localCount === 0) {
+  saveToLocal(); // 首次使用，把内置数据存入本地
+}
+pageStack=['p-home'];
+renderHome();
+</script>
+</body>
+</html>
