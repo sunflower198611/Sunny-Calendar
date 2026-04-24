@@ -331,11 +331,6 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       </div>
       <div class="i-info" id="d-info"></div>
     </div>
-    <div class="quick-row">
-      <div class="q-btn" id="d-done-btn" onclick="quickDone()">标记完成</div>
-      <div class="q-btn" onclick="quickNudge()">立即提醒</div>
-      <div class="q-btn" onclick="quickSnooze()">推迟7天</div>
-    </div>
   </div>
   <div class="scroll">
     <div class="edit-form">
@@ -367,7 +362,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       </div>
       <div class="field">
         <div class="lbl">补充说明</div>
-        <input class="inp" id="d-edit-info" placeholder="金额、账号、渠道…"/>
+        <textarea class="inp" id="d-edit-info" placeholder="金额、账号、渠道…" style="min-height:60px;resize:none;word-break:break-all"></textarea>
       </div>
       <!-- 触发方式 -->
       <div class="field">
@@ -517,17 +512,35 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
           <span class="rt on" data-v="T-1D" onclick="aTogRt(this)">提前1天</span>
           <span class="rt" data-v="T-0" onclick="aTogRt(this)">当天</span>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-          <div style="font-size:12px;color:var(--mu);white-space:nowrap">提前</div>
-          <input class="inp" id="a-remind-hours" type="number" min="0" step="0.5" placeholder="小时数（如1.5）" style="flex:1;padding:7px 10px;font-size:13px" oninput="updatePv()"/>
-          <div style="font-size:12px;color:var(--mu);white-space:nowrap">小时</div>
-        </div>
         <div class="rsum">已选：<em id="a-rsum">T-7天 / T-3天 / T-1天</em></div>
       </div>
       <div style="height:0.5px;background:var(--gb)"></div>
+      <!-- 笔记 -->
       <div class="field">
-        <div class="lbl">备注</div>
-        <textarea class="inp" id="a-note" placeholder="金额、账号尾号、渠道、注意事项…" style="min-height:68px;resize:none"></textarea>
+        <div class="lbl">笔记</div>
+        <textarea class="inp" id="a-note" placeholder="金额、账号尾号、渠道、注意事项…" style="min-height:68px;resize:none;word-break:break-all"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="flex:1;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--gold2)" onclick="document.getElementById('a-photo-cam').click()">
+            📷 拍照
+          </div>
+          <div style="flex:1;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--gold2)" onclick="document.getElementById('a-photo-lib').click()">
+            🖼 相册
+          </div>
+        </div>
+        <input type="file" id="a-photo-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this,'a-photos')"/>
+        <input type="file" id="a-photo-lib" accept="image/*" style="display:none" onchange="handlePhoto(this,'a-photos')"/>
+        <div id="a-photos" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      </div>
+      <div style="height:0.5px;background:var(--gb)"></div>
+      <!-- 紧急程度（自动判断 + 可手动覆盖） -->
+      <div class="field">
+        <div class="lbl">紧急程度 <span class="lbl-note">系统自动判断，可手动调整</span></div>
+        <div style="font-size:11px;color:var(--mu);margin-bottom:8px" id="a-u-reason">根据日期自动判断</div>
+        <div class="u-row" id="a-u-row">
+          <div class="u-opt" id="au-r" onclick="aSelU('r')">紧急</div>
+          <div class="u-opt" id="au-a" onclick="aSelU('a')">即将</div>
+          <div class="u-opt on sel-g" id="au-g" onclick="aSelU('g')">正常</div>
+        </div>
       </div>
       <div style="height:0.5px;background:var(--gb)"></div>
       <div class="pv-card">
@@ -728,117 +741,1401 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
 // 数据
 // ══════════════════════════════════════════════
 const ITEMS = [
-  {cat:'金融信用',sub:'信用卡还款',name:'光大5951',info:'',date:'每月16日',type:'cycle',remind:'T-7D/T-3D/T-1D',u:'a',done:false},
-  {cat:'金融信用',sub:'信用卡还款',name:'中信银行6852',info:'',date:'每月20日',type:'cycle',remind:'T-7D/T-3D/T-1D',u:'r',done:false},
-  {cat:'金融信用',sub:'房贷扣款',name:'房贷一',info:'6100元',date:'每月13日',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'金融信用',sub:'房贷扣款',name:'房贷二',info:'2400元',date:'每月20日',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'金融信用',sub:'收租日',name:'马连道房子',info:'8500元/月',date:'每季度(0426起)',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'金融信用',sub:'收租日',name:'天津房子',info:'1700元/月',date:'每季度(0310起)',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'金融信用',sub:'收租日',name:'菜户营',info:'5300元/月',date:'每季度(0314起)',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'金融信用',sub:'租房缴纳',name:'香溪度',info:'14500元/月',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'金融信用',sub:'租房缴纳',name:'南山',info:'6100元/月',date:'每月1日',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'金融信用',sub:'保险缴费',name:'女儿保费',info:'中银8546 · 8773元',date:'每年4月8日前',type:'yearly',remind:'T-3M/T-1M/T-7D/T-3D/T-1D',u:'r',done:false},
-  {cat:'金融信用',sub:'保险缴费',name:'本人保费一',info:'中银8546 · 5840元',date:'每年12月31日前',type:'yearly',remind:'T-3M/T-1M/T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'金融信用',sub:'保险缴费',name:'本人保费二',info:'中银8546 · 14600元',date:'每年12月31日前',type:'yearly',remind:'T-3M/T-1M/T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'证件法律',sub:'身份证',name:'身份证到期',info:'',date:'2037/12/11',type:'yearly',remind:'T-12M/T-6M/T-1M',u:'g',done:false},
-  {cat:'证件法律',sub:'护照',name:'护照到期',info:'',date:'2027/12/19',type:'yearly',remind:'T-12M/T-6M/T-1M',u:'g',done:false},
-  {cat:'证件法律',sub:'签证',name:'日本签证到期',info:'',date:'2031/03/03',type:'yearly',remind:'T-12M/T-6M',u:'g',done:false},
-  {cat:'证件法律',sub:'签证',name:'美国签证到期',info:'',date:'2028/03/04',type:'yearly',remind:'T-12M/T-6M',u:'g',done:false},
-  {cat:'证件法律',sub:'驾照',name:'驾照体检',info:'',date:'2056/07/15',type:'yearly',remind:'T-6M',u:'g',done:false},
-  {cat:'证件法律',sub:'居住证',name:'北京居住证续签',info:'满11个月可申请',date:'2026/08左右',type:'yearly',remind:'T-1M',u:'g',done:false},
-  {cat:'证件法律',sub:'香港人才',name:'香港人才逗留期限',info:'',date:'2027/09/22前',type:'yearly',remind:'T-12M/T-9M/T-6M/T-3M',u:'g',done:false},
-  {cat:'税务合规',sub:'个税汇算',name:'综合所得汇算',info:'',date:'每年3月1日',type:'yearly',remind:'T-1M',u:'g',done:false},
-  {cat:'税务合规',sub:'个税退税',name:'个税退税',info:'',date:'汇算后',type:'yearly',remind:'',u:'g',done:false},
-  {cat:'税务合规',sub:'社保公积金',name:'社保公积金查看',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'税务合规',sub:'基数调整',name:'公积金/社保基数调整',info:'',date:'每年6月',type:'yearly',remind:'T-1M/T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'合同',sub:'租房合同',name:'租房合同到期',info:'',date:'2026/12',type:'once',remind:'T-6M/T-3M/T-1M',u:'g',done:false},
-  {cat:'合同',sub:'域名续费',name:'域名/服务器续费',info:'包含在房费里',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'报销',name:'报销截止',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'工作',name:'工作 deadline',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'证书',name:'证书继续教育学时',info:'',date:'',type:'yearly',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'报考',name:'报考截止日期',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'KPI',name:'年度KPI中期检查',info:'',date:'',type:'yearly',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'简历',name:'简历/LinkedIn更新',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'行业大会',name:'行业大会早鸟截止',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'职业发展',sub:'面试',name:'面试时间',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'酒店积分保级',name:'万豪白金',info:'57826积分，有效期2028/04/09',date:'白金卡年度截止',type:'yearly',remind:'T-3M/T-1M',u:'a',done:false},
-  {cat:'会员权益',sub:'酒店积分保级',name:'希尔顿金卡',info:'8458积分，需住25晚/15次/6000美元',date:'年度保级',type:'yearly',remind:'T-3M/T-1M',u:'a',done:false},
-  {cat:'会员权益',sub:'酒店积分保级',name:'凯宾斯基白金',info:'38美元余额，白金卡202612',date:'2026/12',type:'yearly',remind:'T-3M/T-1M',u:'g',done:false},
-  {cat:'会员权益',sub:'酒店积分保级',name:'国航银卡',info:'1966里程，银卡到期20261231',date:'2026/12/31',type:'yearly',remind:'T-3M/T-1M',u:'g',done:false},
-  {cat:'会员权益',sub:'信用卡年费',name:'光大5951年费抵扣',info:'145217积分，年费1188元，7-10月20W积分可抵',date:'每年7-10月',type:'yearly',remind:'T-1M/T-7D',u:'g',done:false},
-  {cat:'会员权益',sub:'饮料会员',name:'喜茶',info:'893积分 · 黑卡',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'饮料会员',name:'霸王茶姬',info:'482积分 · v4',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'饮料会员',name:'星巴克',info:'74.9/100 晋级钻星 · 金星',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'饮料会员',name:'Manner',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'服装会员',name:'Moody Tiger',info:'银卡',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'服装会员',name:'鄂尔多斯',info:'13330积分 · 至尊会员',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'服装会员',name:'鄂尔多斯童装',info:'1205积分 · 至尊会员3150元',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'美妆会员',name:'Chanel',info:'尊享会员',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'美妆会员',name:'Dior',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'珠宝会员',name:'老铺',info:'普卡',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'饭店会员',name:'饭店品牌会员',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'图书会员',name:'西西弗',info:'673.8积分 · 464元',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'电商会员',name:'天猫88VIP',info:'钻石会员',date:'2027/04续费',type:'yearly',remind:'T-1M',u:'g',done:false},
-  {cat:'会员权益',sub:'电商会员',name:'京东',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'免税店',name:'CDF免税',info:'金卡',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'免税店',name:'海旅免税',info:'187积分 · 白金卡',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'会员权益',sub:'生日礼',name:'各会员生日礼查看',info:'',date:'生日当月',type:'yearly',remind:'T-7D',u:'g',done:false},
-  {cat:'订阅',sub:'视频会员',name:'优酷',info:'',date:'2027/04/18',type:'yearly',remind:'T-1M/T-7D',u:'g',done:false},
-  {cat:'订阅',sub:'视频会员',name:'爱奇艺',info:'',date:'2026/09/12',type:'yearly',remind:'T-1M/T-7D',u:'g',done:false},
-  {cat:'订阅',sub:'视频会员',name:'芒果TV',info:'',date:'2026/07/31',type:'yearly',remind:'T-1M/T-7D',u:'g',done:false},
-  {cat:'订阅',sub:'视频会员',name:'腾讯视频',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'订阅',sub:'软件',name:'Coze',info:'光大卡扣费 · 9美元/月',date:'5/5取消续订',type:'once',remind:'5月5日提醒',u:'a',done:false},
-  {cat:'订阅',sub:'软件',name:'WPS',info:'',date:'2026/07',type:'yearly',remind:'T-1M',u:'g',done:false},
-  {cat:'订阅',sub:'健身卡',name:'健身卡',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'订阅',sub:'停车卡',name:'停车卡',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'健康',sub:'体检',name:'年度体检',info:'上次20251130慈铭',date:'2026年上半年',type:'yearly',remind:'T-6M/T-1M',u:'g',done:false},
-  {cat:'健康',sub:'复诊',name:'营养科复诊',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'健康',sub:'处方药',name:'乳腺药续药',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'健康',sub:'疫苗',name:'疫苗接种',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'健康',sub:'吃药',name:'哮喘用药',info:'每日2次吸入+片状1次',date:'每日',type:'daily',remind:'每日',u:'g',done:false},
-  {cat:'健康',sub:'牙科',name:'牙科洁牙',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'健康',sub:'宠物',name:'宠物疫苗/驱虫/体检',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'健康',sub:'献血',name:'献血间隔期',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'教育',sub:'学费',name:'学校学费',info:'',date:'每年3/9月',type:'yearly',remind:'T-1M',u:'g',done:false},
-  {cat:'教育',sub:'补习班',name:'火花思维暑假截止',info:'',date:'暑假前',type:'once',remind:'T-1M',u:'g',done:false},
-  {cat:'教育',sub:'补习班',name:'杨梅红10-11月截止',info:'',date:'2026/10',type:'once',remind:'T-1M',u:'g',done:false},
-  {cat:'教育',sub:'补习班',name:'舞蹈课10节后改6楼',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'教育',sub:'竞赛',name:'竞赛报名截止',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'教育',sub:'比赛',name:'斯巴达比赛',info:'',date:'2026/05/23',type:'once',remind:'T-7D/T-3D/T-1D',u:'a',done:false},
-  {cat:'教育',sub:'考试',name:'学而思升班考试',info:'',date:'2026/05/07',type:'once',remind:'T-7D/T-3D/T-1D',u:'a',done:false},
-  {cat:'资产',sub:'理财到期',name:'招行理财 100万（一）',info:'',date:'2026/12/04',type:'once',remind:'T-3M/T-1M/T-7D',u:'g',done:false},
-  {cat:'资产',sub:'理财到期',name:'招行理财 100万（二）',info:'',date:'2027/12/04',type:'once',remind:'T-3M/T-1M/T-7D',u:'g',done:false},
-  {cat:'资产',sub:'理财到期',name:'招行理财 1万',info:'',date:'2027/12/04',type:'once',remind:'T-3M/T-1M/T-7D',u:'g',done:false},
-  {cat:'资产',sub:'公积金医保',name:'公积金/医保查看',info:'粤省事-深圳-人脸识别',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'资产',sub:'股票',name:'股票出售/买卖',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'资产',sub:'股票',name:'股票分红/打新/定投',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'资产',sub:'外币',name:'美元/港币汇率提醒',info:'美元/港币兑人民币趋势',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'出行规划',sub:'订票',name:'假期/出差订票',info:'列出当年假期和建议请假时间',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'优惠券',sub:'平台券',name:'外卖/打车/酒店平台券',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'社交',sub:'家人生日',name:'父亲生日',info:'',date:'07/09',type:'yearly',remind:'T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'社交',sub:'家人生日',name:'母亲生日',info:'',date:'05/26',type:'yearly',remind:'T-7D/T-3D/T-1D',u:'a',done:false},
-  {cat:'社交',sub:'家人生日',name:'女儿生日',info:'',date:'07/23',type:'yearly',remind:'T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'社交',sub:'家人生日',name:'老公生日',info:'',date:'02/12',type:'yearly',remind:'T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'社交',sub:'家人生日',name:'公公生日',info:'',date:'01/21',type:'yearly',remind:'T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'社交',sub:'家人生日',name:'婆婆生日',info:'',date:'02/14',type:'yearly',remind:'T-7D/T-3D/T-1D',u:'g',done:false},
-  {cat:'社交',sub:'朋友',name:'久未联系的朋友',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'社交',sub:'父母',name:'给父母打电话',info:'',date:'每周',type:'cycle',remind:'每周',u:'g',done:false},
-  {cat:'社交',sub:'同事',name:'同事/领导重要节点',info:'',date:'',type:'once',remind:'',u:'g',done:false},
-  {cat:'社交',sub:'人情',name:'人情往来记账',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'复盘',sub:'目标回顾',name:'月/季/年度目标回顾',info:'每月底最后一周的周一',date:'每月底周一',type:'cycle',remind:'月底',u:'g',done:false},
-  {cat:'复盘',sub:'税务',name:'年终奖个税筹划',info:'',date:'',type:'yearly',remind:'',u:'g',done:false},
-  {cat:'家庭家居',sub:'家电',name:'空调/净水器/洗衣机更换',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'家庭家居',sub:'车辆',name:'车辆保养里程',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'家庭家居',sub:'安全',name:'燃气安检/烟感电池更换',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'家庭家居',sub:'应急',name:'药品过期/灭火器检查',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'家庭家居',sub:'家务',name:'大扫除',info:'',date:'每周五',type:'cycle',remind:'每周五',u:'g',done:false},
-  {cat:'家庭家居',sub:'家务',name:'洗衣服',info:'',date:'每周三/六',type:'cycle',remind:'每周三/六',u:'g',done:false},
-  {cat:'家庭家居',sub:'家务',name:'洗澡提醒',info:'',date:'每周三/六',type:'cycle',remind:'每周三/六',u:'g',done:false},
-  {cat:'家庭家居',sub:'话费',name:'手机话费充值',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'数字生活',sub:'云盘',name:'云盘容量检查',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'数字生活',sub:'账号安全',name:'重要账号密码轮换',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'数字生活',sub:'备份',name:'数据备份',info:'',date:'',type:'cycle',remind:'',u:'g',done:false},
-  {cat:'数字生活',sub:'数字资产',name:'遗产型数字资产整理',info:'',date:'',type:'once',remind:'',u:'g',done:false},
+  {
+    "cat": "金融信用",
+    "sub": "信用卡还款",
+    "name": "光大5951",
+    "info": "",
+    "date": "每月16日",
+    "type": "cycle",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "信用卡还款",
+    "name": "中信银行6852",
+    "info": "",
+    "date": "每月5日",
+    "type": "cycle",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "r",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "房贷扣款",
+    "name": "房贷一",
+    "info": "6100元",
+    "date": "每月13日",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "房贷扣款",
+    "name": "房贷二",
+    "info": "2400元",
+    "date": "每月20日",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "收租日",
+    "name": "马连道房子",
+    "info": "8500元/月",
+    "date": "每季度(0426起)",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "收租日",
+    "name": "天津房子",
+    "info": "1700元/月",
+    "date": "每季度(0310起)",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "收租日",
+    "name": "菜户营",
+    "info": "5300元/月",
+    "date": "每季度(0314起)",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "租房缴纳",
+    "name": "香溪度",
+    "info": "14500元/月",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "租房缴纳",
+    "name": "南山",
+    "info": "6100元/月",
+    "date": "每月1日",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "保险缴费",
+    "name": "女儿保费",
+    "info": "中银8546 · 8773元",
+    "date": "",
+    "type": "weekly",
+    "remind": "T-3M/T-1M/T-7D/T-3D/T-1D",
+    "u": "r",
+    "done": true
+  },
+  {
+    "cat": "金融信用",
+    "sub": "保险缴费",
+    "name": "本人保费一",
+    "info": "中银8546 · 5840元",
+    "date": "每年12月31日前",
+    "type": "yearly",
+    "remind": "T-3M/T-1M/T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "保险缴费",
+    "name": "本人保费二",
+    "info": "中银8546 · 14600元",
+    "date": "每年12月31日前",
+    "type": "yearly",
+    "remind": "T-3M/T-1M/T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "证件法律",
+    "sub": "身份证",
+    "name": "身份证到期",
+    "info": "",
+    "date": "2037/12/11",
+    "type": "yearly",
+    "remind": "T-12M/T-6M/T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "证件法律",
+    "sub": "护照",
+    "name": "护照到期",
+    "info": "",
+    "date": "2027/12/19",
+    "type": "yearly",
+    "remind": "T-12M/T-6M/T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "证件法律",
+    "sub": "签证",
+    "name": "日本签证到期",
+    "info": "",
+    "date": "2031/03/03",
+    "type": "yearly",
+    "remind": "T-12M/T-6M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "证件法律",
+    "sub": "签证",
+    "name": "美国签证到期",
+    "info": "",
+    "date": "2028/03/04",
+    "type": "yearly",
+    "remind": "T-12M/T-6M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "证件法律",
+    "sub": "驾照",
+    "name": "驾照体检",
+    "info": "",
+    "date": "2056/07/15",
+    "type": "yearly",
+    "remind": "T-6M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "证件法律",
+    "sub": "居住证",
+    "name": "北京居住证续签",
+    "info": "满11个月可申请",
+    "date": "2026/08左右",
+    "type": "yearly",
+    "remind": "T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "证件法律",
+    "sub": "香港人才",
+    "name": "香港人才逗留期限",
+    "info": "",
+    "date": "2027/09/22前",
+    "type": "yearly",
+    "remind": "T-12M/T-9M/T-6M/T-3M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "税务合规",
+    "sub": "个税汇算",
+    "name": "综合所得汇算",
+    "info": "",
+    "date": "每年3月1日",
+    "type": "yearly",
+    "remind": "T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "税务合规",
+    "sub": "个税退税",
+    "name": "个税退税",
+    "info": "",
+    "date": "汇算后",
+    "type": "yearly",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "税务合规",
+    "sub": "社保公积金",
+    "name": "社保公积金查看",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "税务合规",
+    "sub": "基数调整",
+    "name": "公积金/社保基数调整",
+    "info": "",
+    "date": "每年6月",
+    "type": "yearly",
+    "remind": "T-1M/T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "合同",
+    "sub": "租房合同",
+    "name": "租房合同到期",
+    "info": "",
+    "date": "2026/12",
+    "type": "once",
+    "remind": "T-6M/T-3M/T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "合同",
+    "sub": "域名续费",
+    "name": "域名/服务器续费",
+    "info": "包含在房费里",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "报销",
+    "name": "报销截止",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "工作",
+    "name": "工作 deadline",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "证书",
+    "name": "证书继续教育学时",
+    "info": "",
+    "date": "",
+    "type": "yearly",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "报考",
+    "name": "报考截止日期",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "KPI",
+    "name": "年度KPI中期检查",
+    "info": "",
+    "date": "",
+    "type": "yearly",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "简历",
+    "name": "简历/LinkedIn更新",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "行业大会",
+    "name": "行业大会早鸟截止",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "面试",
+    "name": "面试时间",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "酒店积分保级",
+    "name": "万豪白金",
+    "info": "57826积分，有效期2028/04/09",
+    "date": "白金卡年度截止",
+    "type": "yearly",
+    "remind": "T-3M/T-1M",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "酒店积分保级",
+    "name": "希尔顿金卡",
+    "info": "8458积分，需住25晚/15次/6000美元",
+    "date": "年度保级",
+    "type": "yearly",
+    "remind": "T-3M/T-1M",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "酒店积分保级",
+    "name": "凯宾斯基白金",
+    "info": "38美元余额，白金卡202612",
+    "date": "2026/12",
+    "type": "yearly",
+    "remind": "T-3M/T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "酒店积分保级",
+    "name": "国航银卡",
+    "info": "1966里程，银卡到期20261231",
+    "date": "2026/12/31",
+    "type": "yearly",
+    "remind": "T-3M/T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "信用卡年费",
+    "name": "光大5951年费抵扣",
+    "info": "145217积分，年费1188元，7-10月20W积分可抵",
+    "date": "每年7-10月",
+    "type": "yearly",
+    "remind": "T-1M/T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "饮料会员",
+    "name": "喜茶",
+    "info": "893积分 · 黑卡",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "饮料会员",
+    "name": "霸王茶姬",
+    "info": "482积分 · v4",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "饮料会员",
+    "name": "星巴克",
+    "info": "74.9/100 晋级钻星 · 金星",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "饮料会员",
+    "name": "Manner",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "服装会员",
+    "name": "Moody Tiger",
+    "info": "银卡",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "服装会员",
+    "name": "鄂尔多斯",
+    "info": "13330积分 · 至尊会员",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "服装会员",
+    "name": "鄂尔多斯童装",
+    "info": "1205积分 · 至尊会员3150元",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "美妆会员",
+    "name": "Chanel",
+    "info": "尊享会员",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "美妆会员",
+    "name": "Dior",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "珠宝会员",
+    "name": "老铺",
+    "info": "普卡",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "饭店会员",
+    "name": "饭店品牌会员",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "图书会员",
+    "name": "西西弗",
+    "info": "673.8积分 · 464元",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "电商会员",
+    "name": "天猫88VIP",
+    "info": "钻石会员",
+    "date": "2027/04续费",
+    "type": "yearly",
+    "remind": "T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "电商会员",
+    "name": "京东",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "免税店",
+    "name": "CDF免税",
+    "info": "金卡",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "免税店",
+    "name": "海旅免税",
+    "info": "187积分 · 白金卡",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "生日礼",
+    "name": "各会员生日礼查看",
+    "info": "",
+    "date": "生日当月",
+    "type": "yearly",
+    "remind": "T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "视频会员",
+    "name": "优酷",
+    "info": "",
+    "date": "2027/04/18",
+    "type": "yearly",
+    "remind": "T-1M/T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "视频会员",
+    "name": "爱奇艺",
+    "info": "",
+    "date": "2026/09/12",
+    "type": "yearly",
+    "remind": "T-1M/T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "视频会员",
+    "name": "芒果TV",
+    "info": "",
+    "date": "2026/07/31",
+    "type": "yearly",
+    "remind": "T-1M/T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "视频会员",
+    "name": "腾讯视频",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "软件",
+    "name": "Coze",
+    "info": "光大卡扣费 · 9美元/月",
+    "date": "5/5取消续订",
+    "type": "once",
+    "remind": "5月5日提醒",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "软件",
+    "name": "WPS",
+    "info": "",
+    "date": "2026/07/01",
+    "type": "cycle",
+    "remind": "T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "健身卡",
+    "name": "健身卡",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "订阅",
+    "sub": "停车卡",
+    "name": "停车卡",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "体检",
+    "name": "年度体检",
+    "info": "上次20251130慈铭",
+    "date": "2026年上半年",
+    "type": "yearly",
+    "remind": "T-6M/T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "复诊",
+    "name": "营养科复诊",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "处方药",
+    "name": "乳腺药续药",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "疫苗",
+    "name": "疫苗接种",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "吃药",
+    "name": "哮喘用药",
+    "info": "每日2次吸入+片状1次",
+    "date": "每日",
+    "type": "daily",
+    "remind": "每日",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "牙科",
+    "name": "牙科洁牙",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "宠物",
+    "name": "宠物疫苗/驱虫/体检",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "健康",
+    "sub": "献血",
+    "name": "献血间隔期",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "学费",
+    "name": "学校学费",
+    "info": "",
+    "date": "每年3/9月",
+    "type": "yearly",
+    "remind": "T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "补习班",
+    "name": "火花思维暑假截止",
+    "info": "",
+    "date": "暑假前",
+    "type": "once",
+    "remind": "T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "补习班",
+    "name": "杨梅红10-11月截止",
+    "info": "",
+    "date": "2026/10",
+    "type": "once",
+    "remind": "T-1M",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "补习班",
+    "name": "舞蹈课10节后改6楼",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "竞赛",
+    "name": "竞赛报名截止",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "比赛",
+    "name": "斯巴达比赛",
+    "info": "",
+    "date": "2026/05/23",
+    "type": "once",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "考试",
+    "name": "学而思升班考试",
+    "info": "",
+    "date": "2026/05/07",
+    "type": "once",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "资产",
+    "sub": "理财到期",
+    "name": "招行理财 100万（一）",
+    "info": "",
+    "date": "2026/12/04",
+    "type": "once",
+    "remind": "T-3M/T-1M/T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "资产",
+    "sub": "理财到期",
+    "name": "招行理财 100万（二）",
+    "info": "",
+    "date": "2027/12/04",
+    "type": "once",
+    "remind": "T-3M/T-1M/T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "资产",
+    "sub": "理财到期",
+    "name": "招行理财 1万",
+    "info": "",
+    "date": "2027/12/04",
+    "type": "once",
+    "remind": "T-3M/T-1M/T-7D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "资产",
+    "sub": "公积金医保",
+    "name": "公积金/医保查看",
+    "info": "粤省事-深圳-人脸识别",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "资产",
+    "sub": "股票",
+    "name": "股票出售/买卖",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "资产",
+    "sub": "股票",
+    "name": "股票分红/打新/定投",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "资产",
+    "sub": "外币",
+    "name": "美元/港币汇率提醒",
+    "info": "美元/港币兑人民币趋势",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "出行规划",
+    "sub": "订票",
+    "name": "假期/出差订票",
+    "info": "列出当年假期和建议请假时间",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "优惠券",
+    "sub": "平台券",
+    "name": "外卖/打车/酒店平台券",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "家人生日",
+    "name": "父亲生日",
+    "info": "",
+    "date": "07/09",
+    "type": "yearly",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "家人生日",
+    "name": "母亲生日",
+    "info": "",
+    "date": "05/26",
+    "type": "yearly",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "家人生日",
+    "name": "女儿生日",
+    "info": "",
+    "date": "07/23",
+    "type": "yearly",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "家人生日",
+    "name": "老公生日",
+    "info": "",
+    "date": "02/12",
+    "type": "yearly",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "家人生日",
+    "name": "公公生日",
+    "info": "",
+    "date": "01/21",
+    "type": "yearly",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "家人生日",
+    "name": "婆婆生日",
+    "info": "",
+    "date": "02/14",
+    "type": "yearly",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "朋友",
+    "name": "久未联系的朋友",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "父母",
+    "name": "给父母打电话",
+    "info": "",
+    "date": "每周",
+    "type": "cycle",
+    "remind": "每周",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "同事",
+    "name": "同事/领导重要节点",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "社交",
+    "sub": "人情",
+    "name": "人情往来记账",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "复盘",
+    "sub": "目标回顾",
+    "name": "月/季/年度目标回顾",
+    "info": "每月底最后一周的周一",
+    "date": "每月底周一",
+    "type": "cycle",
+    "remind": "月底",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "复盘",
+    "sub": "税务",
+    "name": "年终奖个税筹划",
+    "info": "",
+    "date": "",
+    "type": "yearly",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "家电",
+    "name": "空调/净水器/洗衣机更换",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "车辆",
+    "name": "车辆保养里程",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "安全",
+    "name": "燃气安检/烟感电池更换",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "应急",
+    "name": "药品过期/灭火器检查",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "家务",
+    "name": "大扫除",
+    "info": "",
+    "date": "每周五",
+    "type": "cycle",
+    "remind": "每周五",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "家务",
+    "name": "洗衣服",
+    "info": "",
+    "date": "每周三/六",
+    "type": "cycle",
+    "remind": "每周三/六",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "家务",
+    "name": "洗澡提醒",
+    "info": "",
+    "date": "每周三/六",
+    "type": "cycle",
+    "remind": "每周三/六",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "家庭家居",
+    "sub": "话费",
+    "name": "手机话费充值",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "数字生活",
+    "sub": "云盘",
+    "name": "云盘容量检查",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "数字生活",
+    "sub": "账号安全",
+    "name": "重要账号密码轮换",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "数字生活",
+    "sub": "备份",
+    "name": "数据备份",
+    "info": "",
+    "date": "",
+    "type": "cycle",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "数字生活",
+    "sub": "数字资产",
+    "name": "遗产型数字资产整理",
+    "info": "",
+    "date": "",
+    "type": "once",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "出行规划",
+    "sub": "五一假期",
+    "name": "游览清华",
+    "info": "",
+    "date": "4月25",
+    "type": "once",
+    "remind": "T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "假期规划",
+    "sub": "五一假期",
+    "name": "游览清华",
+    "info": "",
+    "date": "4月25",
+    "type": "once",
+    "remind": "T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "假期规划",
+    "sub": "五一假期",
+    "name": "游览清华",
+    "info": "",
+    "date": "4月25",
+    "type": "cycle",
+    "remind": "T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "老师交流",
+    "name": "英语/语文班内水平和何时备考KET，演讲等路线，是否需要报班",
+    "info": "",
+    "date": "4月24",
+    "type": "once",
+    "remind": "T-3D/T-1D",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "和娃交流",
+    "name": "对于中国地图形式的学习是否感兴趣有什么想法",
+    "info": "",
+    "date": "4月23",
+    "type": "once",
+    "remind": "T-0",
+    "u": "r",
+    "done": false
+  },
+  {
+    "cat": "教育",
+    "sub": "假期学习",
+    "name": "主科学习",
+    "info": "",
+    "date": "0424-0505",
+    "type": "cycle",
+    "remind": "T-1D/T-0",
+    "u": "a",
+    "done": false
+  },
+  {
+    "cat": "金融信用",
+    "sub": "银行电话账单",
+    "name": "香港银行电话的账单",
+    "info": "",
+    "date": "每月1日",
+    "type": "once",
+    "remind": "T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "读书成长",
+    "name": "读书",
+    "info": "五一假期读1-2本书",
+    "date": "2026/04/25",
+    "type": "cycle",
+    "remind": "T-0",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "会员权益",
+    "sub": "饮料会员",
+    "name": "淡马茶坊",
+    "info": "",
+    "date": "",
+    "type": "none",
+    "remind": "",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "创业",
+    "name": "日历产品设计",
+    "info": "1 基础数据》个别功能（时间）〉各模块同步，联动手机提醒，小插件和弹窗；补充说明可以放大或者可以看到后面的文字；备注改为笔记和可拍照或选相机的照片上传多张；模版颜色选择 4个 2 用户系统及初始模版复用",
+    "date": "0424-0505",
+    "type": "cycle",
+    "remind": "T-0",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "工作deadline",
+    "name": "电脑邮寄（是否还有要看的）&ADP下载&RSU自行申报&邮件反馈",
+    "info": "",
+    "date": "0504",
+    "type": "once",
+    "remind": "T-3D/T-1D/T-0",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "创业",
+    "name": "健身产品设计",
+    "info": "【用户使用链路】
+1 点击进入个人页面，是你的数据（基础数据设定，可以是空）
+2 年龄输入问题一：初始示数是40，我点击向上按键，示数变成10，这里貌似是个bug
+3 年龄输入问题二：我把年龄框起来准备直接输入改写数字，页面返回到最开始页面，多次尝试都是这样
+4 年龄输入问题三：刚才的问题出现在微信直接点开网页时候出现，把网页复制到苹果浏览器，没有向上和向下的数字按键了，年龄输入问题一没有了，年龄输入问题二还存在
+
+5 进入问题：不挂VPN无法进入
+6 进入页面-可用器材，点击具体器材后无反馈，额没有其他地方显示已经点击确认
+7 进入页面-运动偏好，只能单选，但我的习惯是跑步+力量一起练，对于我来说，跑步可以减重、力量训练可以塑形，都有需求，所以建议可以多选也可以只选一个，应该是个不定项选择
+8 进入页面-填写过程中，点击黑色空白处会返回开始页面，再次点击【start】的按键，填写的内容还在，但是这个体验不是特别好，因为像一些下拉菜单啊之类的，是需要一个点击别处返回的操作的，这就导致比较反复
+9 进入页面-身体感受部分，其实可以在选择了性别之后，对于男性用户，可以隐藏【改善经期不适】选项，
+10 用户档案页面-分析给到的建议不足
+- 比如运动建议，那么有没有具体的练习计划呢？有一个APP叫【开练】，里面就会有各种具体联系的部分的练习动作，有3D的动画教动作，这是一个可以融合进来的部分；
+- 比如饮食条例，薄荷健康应该是会给到菜单的，像我去301医院，大夫也会给到一个小程序，里面按照我个人的情况，给到每天每餐的饮食建议，每天热量的摄入总量限制和蛋白质蔬菜碳水每天的可摄入量，这样就可以锚着这个目标要求，进行饮食的记录，就喊生了用户的持续的黏度。因为，给到的菜谱，其实不一定和个人口味的，大夫给我的菜谱就是南方菜为主，不适合我的北方胃，我就自己锚着每日热量的摄入要求，自己弄的生黄瓜和小西红柿，这样也是很OK的
+- 比如睡眠建议，这个导师我不太熟，但是华为的手表是可以进行睡眠监控的，在华为手机的APP上也可以看到睡眠的情况，就比较可以让人认可，这样再进行建议就比较好。回归到健身产品，没有睡眠的监控，给到的睡眠建议大概率是弱建议，如果不能产生变化，就容易让用户对产品产生不信任感，这里我有一个建议，也是给予过往的经验得出的，如果一个功能不能很好的亮相，那就保留核心功能的前提下，这个功能再等等
+- 比如中医养生，其实没有给到我具体的plan
+11 饮食热量·记录：给到每日的摄入目标是3075，这个太多了，很夸张了，虽然可以修改，但是一般人其实不知道怎么计算可摄入热量的。其实，不同年龄身体状态的人有一个基础的热量摄入公式，比如薄荷健康，就能比较客观的给到，我记得薄荷健康给到的就是1854，这就比较客观的平均值，然后人体最低消耗BMI是这个数据*70%，也就是我最低消耗量是1854*70%‎ = 1,297.8，这个数据恰好是我每天尝试限制自己的热量值，前面减肥的时候就是这个数据帮到我的。
+12 餐饮热量·记录：饮水，给到具体的数据没问题，也很科学，不过实操上，其实大家的杯子，比较少有明确标记荣来那个的，所以薄荷健康会给到8杯水这样的逻辑，机油数据的可学性，又有实操性。
+13 餐饮热量·记录：餐饮貌似现在无法记录，是不是还没有开发功能
+14 食物库，其实不错，不过建议增加烹饪方式，比如鸡胸肉，水煮、烟熏、红烧，最终产生的热量不一样，越是复杂加工方式，热量越大，因为有更多的酱汁
+15 运动计划：专业评估只有两个问题，得到的结果会让我产生怀疑，且给到的建议，我也觉得有一点soft，就俩动作，运动时间也不足。",
+    "date": "0425",
+    "type": "daily",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "职业发展",
+    "sub": "创业",
+    "name": "教育产品设计",
+    "info": "怎么拆分变小；增加语文板块",
+    "date": "0424",
+    "type": "daily",
+    "remind": "T-0",
+    "u": "g",
+    "done": false
+  },
+  {
+    "cat": "假期规划",
+    "sub": "五一假期",
+    "name": "天津廊坊之旅",
+    "info": "",
+    "date": "0424",
+    "type": "cycle",
+    "remind": "T-7D/T-3D/T-1D",
+    "u": "g",
+    "done": false
+  }
 ];
 
 // ══════════════════════════════════════════════
@@ -1015,38 +2312,40 @@ function renderTrigFields(pfx, trig, vals){
       <div style="font-size:11px;color:var(--mu);margin-top:5px">时间可选，留空表示全天</div>
     </div>`;
   } else if(trig===2){
-    // 周期循环: 开始日期 + 周期选择 + 可选时间(若每日或填了时间出现提前N小时)
+    // 周期循环: 循环周期 → 开始日期 → 结束日期 → 具体时间 → 提前提醒
     html=`<div class="field">
+      <div class="lbl">循环周期</div>
+      <div class="seg" id="${pfx}-cycle-seg" style="flex-wrap:wrap">
+        <div class="si" id="${pfx}-cy-daily" onclick="selCycle('${pfx}','daily')">每日</div>
+        <div class="si" id="${pfx}-cy-weekly" onclick="selCycle('${pfx}','weekly')">每周</div>
+        <div class="si" id="${pfx}-cy-monthly" onclick="selCycle('${pfx}','monthly')">每月</div>
+        <div class="si" id="${pfx}-cy-quarterly" onclick="selCycle('${pfx}','quarterly')">每季</div>
+        <div class="si" id="${pfx}-cy-yearly" onclick="selCycle('${pfx}','yearly')">每年</div>
+      </div>
+    </div>
+    <div class="field">
       <div class="lbl">开始日期</div>
       <input class="inp" id="${pfx}-tf-date" placeholder="如 2026/05/01" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
     </div>
     <div class="field">
-      <div class="lbl">循环周期</div>
-      <div class="seg" id="${pfx}-cycle-seg" style="flex-wrap:wrap">
-        <div class="si${vals.cycle==='daily'||!vals.cycle?'':''}" id="${pfx}-cy-daily" onclick="selCycle('${pfx}','daily')">每日</div>
-        <div class="si${vals.cycle==='weekly'?' on':''}" id="${pfx}-cy-weekly" onclick="selCycle('${pfx}','weekly')">每周</div>
-        <div class="si${vals.cycle==='monthly'?' on':''}" id="${pfx}-cy-monthly" onclick="selCycle('${pfx}','monthly')">每月</div>
-        <div class="si${vals.cycle==='quarterly'?' on':''}" id="${pfx}-cy-quarterly" onclick="selCycle('${pfx}','quarterly')">每季</div>
-        <div class="si${vals.cycle==='yearly'?' on':''}" id="${pfx}-cy-yearly" onclick="selCycle('${pfx}','yearly')">每年</div>
-      </div>
+      <div class="lbl">结束日期 <span class="lbl-note">可选</span></div>
+      <input class="inp" id="${pfx}-tf-enddate" placeholder="如 2027/12/31" value="${escHtml(vals.enddate||'')}"/>
     </div>
     <div class="field">
-      <div class="lbl">时间 <span class="lbl-note">可选</span></div>
+      <div class="lbl">具体时间 <span class="lbl-note">可选</span></div>
       <input class="inp" id="${pfx}-tf-time" type="time" placeholder="HH:MM" value="${vals.time||''}" oninput="onCycleTimeInput('${pfx}')"/>
     </div>
     <div class="field" id="${pfx}-advance-hours-field" style="display:${vals.cycle==='daily'||vals.time?'flex':'none'};flex-direction:column">
-      <div class="lbl">提前提醒 <span class="lbl-note">（循环任务）</span></div>
+      <div class="lbl">提前提醒</div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="font-size:12px;color:var(--mu);white-space:nowrap">提前</div>
         <input class="inp" id="${pfx}-tf-advance" type="number" min="0" step="0.5" placeholder="如 0.5" style="flex:1;padding:7px 10px;font-size:13px" value="${vals.advance||''}"/>
         <div style="font-size:12px;color:var(--mu);white-space:nowrap">小时</div>
       </div>
     </div>`;
-    // 需要初始化选中状态
     setTimeout(()=>{
       const cyc=vals.cycle||'weekly';
-      const cycs=['daily','weekly','monthly','quarterly','yearly'];
-      cycs.forEach(c=>{
+      ['daily','weekly','monthly','quarterly','yearly'].forEach(c=>{
         const e=document.getElementById(pfx+'-cy-'+c);
         if(e)e.classList.toggle('on',c===cyc);
       });
@@ -1082,6 +2381,7 @@ function onCycleTimeInput(pfx){
 
 function getTrigVals(pfx){
   const dateEl=document.getElementById(pfx+'-tf-date');
+  const enddateEl=document.getElementById(pfx+'-tf-enddate');
   const timeEl=document.getElementById(pfx+'-tf-time');
   const advEl=document.getElementById(pfx+'-tf-advance');
   const cycs=['daily','weekly','monthly','quarterly','yearly'];
@@ -1089,6 +2389,7 @@ function getTrigVals(pfx){
   cycs.forEach(c=>{const e=document.getElementById(pfx+'-cy-'+c);if(e&&e.classList.contains('on'))cycle=c;});
   return {
     date: dateEl?dateEl.value.trim():'',
+    enddate: enddateEl?enddateEl.value.trim():'',
     time: timeEl?timeEl.value:'',
     cycle: cycle,
     advance: advEl?advEl.value.trim():'',
@@ -1134,12 +2435,12 @@ function toast(msg){
 function renderHome(){
   buildSidebar();renderItems();renderUpcoming();
 }
-const CAT_LIST_ORDER=[...new Set(ITEMS.map(d=>d.cat))];
 function buildSidebar(){
   const counts={};
   ITEMS.forEach(d=>{counts[d.cat]=(counts[d.cat]||0)+1});
   document.getElementById('cnt_all').textContent=ITEMS.length;
-  document.getElementById('catList').innerHTML=CAT_LIST_ORDER.map(c=>`
+  // 用动态 A_CATS，包含用户新增的分类
+  document.getElementById('catList').innerHTML=A_CATS.map(c=>`
     <div class="s-item${activeCat===c?' on':''}" onclick="selCat('${c}')">
       <span class="s-dot" style="background:${CAT_COLORS[c]||'#888'}"></span>
       <span class="s-name">${c}</span>
@@ -1379,11 +2680,15 @@ function initAddPage(){
   for(let j=0;j<5;j++) document.getElementById('atc'+j).classList.toggle('on',j===0);
   renderTrigFields('a', 0, {});
   // 重置提醒
-  document.querySelectorAll('#a-rt-wrap .rt').forEach((el,i)=>{
+  document.querySelectorAll('#a-rt-wrap .rt').forEach((el)=>{
     el.classList.toggle('on',['T-7D','T-3D','T-1D'].includes(el.dataset.v));
   });
-  document.getElementById('a-remind-hours').value='';
   aUpdateRsum();
+  // 重置手动紧急程度和照片
+  aManualU=null;
+  aPhotos=[];
+  const photosEl=document.getElementById('a-photos');
+  if(photosEl)photosEl.innerHTML='';
   // 重复性
   const repItems=document.querySelectorAll('#a-repeat-seg .si');
   repItems.forEach(e=>e.classList.remove('on'));
@@ -1419,10 +2724,86 @@ function aPreset(k){
 }
 function aUpdateRsum(){
   const s=[...document.querySelectorAll('#a-rt-wrap .rt.on')].map(e=>VL[e.dataset.v]);
-  const h=document.getElementById('a-remind-hours').value.trim();
-  const parts=[...s];
-  if(h)parts.push(`提前${h}小时`);
-  document.getElementById('a-rsum').textContent=parts.length?parts.join(' / '):'未选择';
+  document.getElementById('a-rsum').textContent=s.length?s.join(' / '):'未选择';
+}
+
+// ── 照片上传 ──────────────────────────────────
+let aPhotos=[]; // base64 数组
+function handlePhoto(input, containerId){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    aPhotos.push(e.target.result);
+    renderPhotos(containerId);
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function renderPhotos(containerId){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML=aPhotos.map((src,i)=>`
+    <div style="position:relative;width:72px;height:72px">
+      <img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:0.5px solid var(--gb)"/>
+      <div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer" onclick="removePhoto(${i},'${containerId}')">×</div>
+    </div>`).join('');
+}
+function removePhoto(i, containerId){
+  aPhotos.splice(i,1);
+  renderPhotos(containerId);
+}
+
+// ── 自动紧急程度判断 ──────────────────────────
+let aManualU=null; // null=自动，否则用户手动选的
+function autoUrgency(){
+  // 根据截止日期/提醒节点判断
+  const dateEl=document.getElementById('a-tf-date');
+  const dateStr=dateEl?dateEl.value.trim():'';
+  let u='g', reason='暂无日期，默认正常';
+  if(dateStr){
+    const d=parseDateStr(dateStr);
+    if(d){
+      const today=new Date();today.setHours(0,0,0,0);
+      const diff=Math.ceil((d-today)/(1000*60*60*24));
+      if(diff<=3){u='r';reason=`距截止仅 ${diff} 天，判定为紧急`;}
+      else if(diff<=14){u='a';reason=`距截止 ${diff} 天，判定为即将`;}
+      else{u='g';reason=`距截止 ${diff} 天，判定为正常`;}
+    }
+  }
+  return{u,reason};
+}
+function parseDateStr(s){
+  let m=s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  m=s.match(/每月(\d{1,2})[日号]/);
+  if(m){
+    const today=new Date();
+    const d=+m[1];
+    let target=new Date(today.getFullYear(),today.getMonth(),d);
+    if(target<today)target.setMonth(target.getMonth()+1);
+    return target;
+  }
+  return null;
+}
+function refreshAutoUrgency(){
+  if(aManualU)return; // 用户已手动选，不覆盖
+  const {u,reason}=autoUrgency();
+  aSelUInternal(u);
+  const el=document.getElementById('a-u-reason');
+  if(el)el.textContent=reason;
+}
+function aSelU(u){
+  aManualU=u;
+  aSelUInternal(u);
+  const el=document.getElementById('a-u-reason');
+  if(el)el.textContent='已手动设置';
+}
+function aSelUInternal(u){
+  ['r','a','g'].forEach(x=>{
+    const el=document.getElementById('au-'+x);
+    if(el)el.className='u-opt'+(x===u?' sel-'+x:'');
+  });
 }
 function updatePv(){
   const name=document.getElementById('a-name').value||'条目名称';
@@ -1434,6 +2815,7 @@ function updatePv(){
   document.getElementById('a-pv-name').textContent=name;
   document.getElementById('a-pv-meta').textContent=cat+' › '+sub+' · '+(aIsOnce?'一次性':'重复')+(date?' · '+date:'');
   document.getElementById('a-pv-tags').innerHTML=tags.map(t=>`<span class="pv-tag">${t}</span>`).join('');
+  refreshAutoUrgency();
 }
 function saveNew(){
   const name=document.getElementById('a-name').value.trim();
@@ -1451,14 +2833,18 @@ function saveNew(){
   const repIdx=[...document.querySelectorAll('#a-repeat-seg .si')].indexOf(repOn);
   if(repIdx===1)type='once';
   const remParts=[...document.querySelectorAll('#a-rt-wrap .rt.on')].map(e=>e.dataset.v);
-  const h=document.getElementById('a-remind-hours').value.trim();
-  if(h)remParts.push('T-'+h+'H');
+  // 紧急程度：优先使用手动选择，否则自动判断
+  const finalU=aManualU||(autoUrgency().u);
   if(!A_CATS.includes(cat))A_CATS.push(cat);
   ITEMS.push({
     cat,sub,name,
     info:document.getElementById('a-note').value.trim(),
+    photos:[...aPhotos],
     date:tv.date,
-    type,remind:remParts.join('/'),u:'g',done:false
+    enddate:tv.enddate||'',
+    time:tv.time||'',
+    type,remind:remParts.join('/'),
+    u:finalU,done:false
   });
   toast('已添加：'+name);
   goBack();renderHome();
