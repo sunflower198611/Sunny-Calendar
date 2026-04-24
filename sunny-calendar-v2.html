@@ -3008,14 +3008,14 @@ function loadFromLocal(){
     const raw=localStorage.getItem(STORAGE_KEY);
     if(raw){
       const parsed=JSON.parse(raw);
-      if(Array.isArray(parsed)&&parsed.length>0){
+      if(Array.isArray(parsed) && parsed.length >= 5){
         ITEMS.length=0;
         parsed.forEach(item=>ITEMS.push(item));
-        return true;
+        return parsed.length; // 返回条数
       }
     }
   }catch(e){console.warn('读取失败',e);}
-  return false;
+  return 0; // 本地无有效数据
 }
 
 // 导出数据
@@ -3095,12 +3095,17 @@ const _origPillDone=pillDone;
 pillDone=function(idx){_origPillDone(idx);saveToLocal();};
 
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // 初始化
 // ══════════════════════════════════════════════
-loadFromLocal(); // 优先从本地读取，否则用内置数据
+const _localCount = loadFromLocal();
+if (_localCount === 0) {
+  // 本地无数据，用内置125条，并存入本地
+  saveToLocal();
+}
+// 如果本地有数据（_localCount > 0），ITEMS 已被 loadFromLocal 替换，直接用
 pageStack=['p-home'];
 renderHome();
-saveToLocal(); // 首次启动保存一次（内置数据入库）
 </script>
 </body>
 </html>
