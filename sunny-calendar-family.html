@@ -190,13 +190,12 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
 .attach-file{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);font-size:12px;color:var(--mu);cursor:pointer}
 .attach-file .rm-f{margin-left:auto;color:var(--mu);font-size:14px;padding:0 2px}
 
-/* 右滑删除 */
+/* 右滑删除 - flex推出式 */
 .row-wrap{position:relative;overflow:hidden;border-radius:var(--rl);margin-bottom:1px}
-.row-del-bg{position:absolute;right:0;top:0;bottom:0;width:80px;background:var(--redborder);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:500;pointer-events:none}
-.row{transition:transform .2s ease;touch-action:pan-y;cursor:pointer;user-select:none}
-.row.swiped{transform:translateX(-80px)}
-.row-del-confirm{position:absolute;right:0;top:0;bottom:0;width:80px;display:flex;align-items:center;justify-content:center;background:var(--redborder);cursor:pointer;z-index:2}
-.row-del-confirm span{color:#fff;font-size:12px;font-weight:500}
+.row-inner{display:flex;width:calc(100% + 80px);transition:transform .25s ease}
+.row-inner.swiped{transform:translateX(-80px)}
+.row-del-bg{width:80px;flex-shrink:0;background:#c0392b;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;border-radius:0 var(--rl) var(--rl) 0}
+.row{flex:1;min-width:0;touch-action:pan-y;cursor:pointer;user-select:none}
 .cmb-wrap{position:relative}
 .cmb-input-row{display:flex;align-items:center;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);overflow:hidden}
 .cmb-input-row:focus-within{border-color:var(--gold)}
@@ -505,7 +504,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <div style="height:0.5px;background:var(--gb)"></div>
       <div class="field">
         <div class="lbl">条目名称</div>
-        <input class="inp" id="a-name" placeholder="例：中信银行6852 信用卡" oninput="updatePv()"/>
+        <input class="inp" id="a-name" placeholder="例：招商银行信用卡" oninput="updatePv()"/>
       </div>
       <div class="field">
         <div class="lbl">补充说明</div>
@@ -1127,11 +1126,13 @@ function renderItems(){
       ${arr.map(item=>{
         const idx=ITEMS.indexOf(item);
         return`<div class="row-wrap" id="rw-${idx}">
-          <div class="row-del-bg">删除</div>
-          <div class="row${item.u==='r'?' urgent':item.u==='a'?' soon':''}${item.done?' done-item':''}" id="row-${idx}" onclick="rowClick(event,${idx})" ontouchstart="swipeStart(event,${idx})" ontouchmove="swipeMove(event,${idx})" ontouchend="swipeEnd(event,${idx})">
-            <div class="chk${item.done?' on':''}" onclick="event.stopPropagation();toggleDone(${idx})"></div>
-            <div style="min-width:0"><div class="rn">${item.name}</div><div class="rs">${item.sub}${item.info?' · '+item.info:''}</div></div>
-            <div class="r-right"><span class="badge ${UC[item.u]}">${UL[item.u]}</span><div class="r-date">${item.date||'—'}</div></div>
+          <div class="row-inner" id="ri-${idx}">
+            <div class="row${item.u==='r'?' urgent':item.u==='a'?' soon':''}${item.done?' done-item':''}" id="row-${idx}" onclick="rowClick(event,${idx})" ontouchstart="swipeStart(event,${idx})" ontouchmove="swipeMove(event,${idx})" ontouchend="swipeEnd(event,${idx})">
+              <div class="chk${item.done?' on':''}" onclick="event.stopPropagation();toggleDone(${idx})"></div>
+              <div style="min-width:0"><div class="rn">${item.name}</div><div class="rs">${item.sub}${item.info?' · '+item.info:''}</div></div>
+              <div class="r-right"><span class="badge ${UC[item.u]}">${UL[item.u]}</span><div class="r-date">${item.date||'—'}</div></div>
+            </div>
+            <div class="row-del-bg" onclick="swipeDelete(${idx})">删除</div>
           </div>
         </div>`;
       }).join('')}
@@ -1641,8 +1642,8 @@ function calSelDate(y,mo,d){
 // ══════════════════════════════════════════════
 // 本地存储 & 持久化
 // ══════════════════════════════════════════════
-const STORAGE_KEY = 'sunny_calendar_items';
-const STORAGE_META = 'sunny_calendar_meta';
+const STORAGE_KEY = 'sunny_calendar_family_items';
+const STORAGE_META = 'sunny_calendar_family_meta';
 
 function saveToLocal(){
   try{
@@ -1739,12 +1740,7 @@ let _swipe={idx:-1,startX:0,startY:0,moved:false,swiped:false};
 let _swipedIdx=-1; // 当前已滑开的行
 
 function rowClick(e,idx){
-  // 如果当前行是滑开状态，点击收回；否则打开详情
-  if(_swipedIdx===idx){
-    snapBack(idx);
-    return;
-  }
-  // 如果有其他行滑开，先收回
+  if(_swipedIdx===idx){snapBack(idx);return;}
   if(_swipedIdx>=0) snapBack(_swipedIdx);
   openDetail(idx);
 }
@@ -1752,7 +1748,6 @@ function rowClick(e,idx){
 function swipeStart(e,idx){
   if(e.touches.length!==1)return;
   _swipe={idx,startX:e.touches[0].clientX,startY:e.touches[0].clientY,moved:false,swiped:_swipedIdx===idx};
-  // 如果有其他行滑开，收回
   if(_swipedIdx>=0 && _swipedIdx!==idx) snapBack(_swipedIdx);
 }
 
@@ -1760,29 +1755,27 @@ function swipeMove(e,idx){
   if(_swipe.idx!==idx)return;
   const dx=e.touches[0].clientX-_swipe.startX;
   const dy=e.touches[0].clientY-_swipe.startY;
-  if(!_swipe.moved && Math.abs(dy)>Math.abs(dx)) return; // 纵向滚动，不处理
+  if(!_swipe.moved && Math.abs(dy)>Math.abs(dx)) return;
   _swipe.moved=true;
   e.preventDefault();
-  const row=document.getElementById('row-'+idx);
-  if(!row)return;
+  const ri=document.getElementById('ri-'+idx);
+  if(!ri)return;
   const base=_swipe.swiped?-80:0;
-  const offset=Math.min(0,Math.max(-80, base+dx));
-  row.style.transition='none';
-  row.style.transform=`translateX(${offset}px)`;
+  const offset=Math.min(0,Math.max(-80,base+dx));
+  ri.style.transition='none';
+  ri.style.transform=`translateX(${offset}px)`;
 }
 
 function swipeEnd(e,idx){
   if(_swipe.idx!==idx||!_swipe.moved)return;
   const dx=e.changedTouches[0].clientX-_swipe.startX;
-  const row=document.getElementById('row-'+idx);
-  if(!row)return;
-  row.style.transition='';
+  const ri=document.getElementById('ri-'+idx);
+  if(!ri)return;
+  ri.style.transition='';
   const base=_swipe.swiped?-80:0;
-  const final=base+dx;
-  if(final<-40){
-    // 滑开 → 显示删除
-    row.style.transform='translateX(-80px)';
-    row.classList.add('swiped');
+  if(base+dx<-40){
+    ri.style.transform='translateX(-80px)';
+    ri.classList.add('swiped');
     _swipedIdx=idx;
   } else {
     snapBack(idx);
@@ -1790,32 +1783,19 @@ function swipeEnd(e,idx){
 }
 
 function snapBack(idx){
-  const row=document.getElementById('row-'+idx);
-  if(row){row.style.transform='';row.classList.remove('swiped');}
+  const ri=document.getElementById('ri-'+idx);
+  if(ri){ri.style.transform='';ri.classList.remove('swiped');}
   if(_swipedIdx===idx)_swipedIdx=-1;
 }
 
 function swipeDelete(idx){
-  // 点击删除背景区域时触发
   if(_swipedIdx!==idx)return;
   const name=ITEMS[idx].name;
   ITEMS.splice(idx,1);
   _swipedIdx=-1;
   refreshAll();
-  // 撤销支持
-  _lastDeleted={item:ITEMS[idx]||null, idx, name}; // 保存以备撤销（简化版：不实现完整undo）
   toast(`已删除「${name}」`);
 }
-
-// 给删除背景区域绑定点击（在renderItems里动态生成后通过事件委托处理）
-document.addEventListener('click', function(e){
-  const bg=e.target.closest('.row-del-bg');
-  if(!bg)return;
-  const wrap=bg.closest('.row-wrap');
-  if(!wrap)return;
-  const id=wrap.id.replace('rw-','');
-  swipeDelete(parseInt(id));
-});
 
 // ══════════════════════════════════════════════
 // 附件管理（详情页）
