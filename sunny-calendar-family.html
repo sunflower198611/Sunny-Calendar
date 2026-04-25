@@ -66,6 +66,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
 .pill-r{background:var(--redbg);border:0.5px solid var(--redborder);color:var(--redtext)}
 .pill-a{background:var(--amberbg);border:0.5px solid var(--amberborder);color:var(--ambertext)}
 .pill-n{background:var(--bg3);border:0.5px solid var(--dim);color:var(--mu)}
+.pill-phase{background:rgba(155,126,200,.18);border:0.5px solid rgba(155,126,200,.4);color:#c5a8f0}
 .pill-x{font-size:13px;line-height:1;cursor:pointer;opacity:.55;margin-left:1px;flex-shrink:0;transition:opacity .15s}
 .pill-x:hover{opacity:1}
 .primary-btn{width:100%;padding:13px;border-radius:var(--rl);background:var(--golddim);border:0.5px solid var(--gold);font-size:15px;font-weight:500;color:var(--gold3);cursor:pointer;text-align:center;transition:opacity .15s}
@@ -85,7 +86,7 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
 .tabs::-webkit-scrollbar{display:none}
 .tab{font-size:13px;padding:8px 11px;color:var(--mu);white-space:nowrap;border-bottom:1.5px solid transparent;cursor:pointer;flex-shrink:0;transition:color .2s}
 .tab.on{color:var(--gold2);border-bottom-color:var(--gold)}
-.upcoming{margin:12px 14px 0;background:var(--bg2);border-radius:var(--rl);border:0.5px solid var(--gb);padding:11px 13px;flex-shrink:0}
+.upcoming{background:var(--bg2);border-radius:var(--rl);border:0.5px solid var(--gb);padding:8px 10px;flex-shrink:0}
 .up-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .up-t{font-size:10px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase}
 .up-d{font-size:10px;color:var(--mu)}
@@ -111,11 +112,12 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
 .g-hd{display:flex;align-items:center;gap:6px;margin-bottom:5px}
 .g-line{flex:1;height:0.5px;background:var(--gb)}
 .g-lbl{font-size:9px;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
-.row{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--r);border:0.5px solid var(--bg4);background:var(--bg2);margin-bottom:4px;cursor:pointer;transition:border-color .15s}
+.row{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 10px 9px 8px;border-radius:var(--r);border:0.5px solid var(--bg4);border-left:3px solid #1D9E75;background:var(--bg2);margin-bottom:4px;cursor:pointer;transition:border-color .15s}
 .row:active{background:var(--bg3)}
-.row.urgent{border-color:var(--redborder);background:var(--redbg)}
-.row.soon{border-color:var(--amberborder);background:var(--amberbg)}
-.row.done-item{opacity:.45}
+.row.urgent{border-color:var(--redborder);border-left-color:#c0392b;background:var(--redbg)}
+.row.soon{border-color:var(--amberborder);border-left-color:#c9a84c;background:var(--amberbg)}
+.row.phase-purple{border-left-color:#9b7ec8;background:rgba(155,126,200,.08);border-color:rgba(155,126,200,.25)}
+.row.done-item{opacity:.45;border-left-color:var(--dim)}
 .row.done-item .rn{text-decoration:line-through;color:var(--dim)}
 .chk{width:15px;height:15px;border-radius:4px;border:0.5px solid var(--dim);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .chk.on{background:var(--golddim);border-color:var(--gold)}
@@ -138,7 +140,8 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
 .i-cat-txt{font-size:11px;color:var(--mu)}
 .i-name-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .i-name{font-size:18px;font-weight:500;line-height:1.3;flex:1}
-.i-info{font-size:12px;color:var(--mu);margin-top:5px}
+.i-info{font-size:12px;color:var(--mu);margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;cursor:pointer;transition:all .2s}
+.i-info.expanded{display:block;-webkit-line-clamp:unset}
 .quick-row{display:flex;gap:8px;padding:12px 16px;border-bottom:0.5px solid var(--gb);flex-shrink:0}
 .q-btn{flex:1;padding:8px 4px;border-radius:var(--r);border:0.5px solid var(--gb);background:var(--bg3);font-size:11px;color:var(--mu);text-align:center;cursor:pointer;transition:all .15s;line-height:1.3}
 .q-btn:active{opacity:.7}
@@ -250,18 +253,36 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
    ════════════════════════════════════ */
 .cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:5px;border-radius:8px;cursor:pointer;position:relative;transition:background .12s}
 .cal-cell:hover{background:var(--bg3)}
-.cal-cell.today .cal-num{background:var(--golddim);color:var(--gold3);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-cell.today .cal-num{position:relative;color:var(--w)}
+.cal-cell.today .cal-num::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border:1.5px solid rgba(255,255,255,0.35);border-radius:50%;pointer-events:none;z-index:0}
 .cal-cell.selected{background:var(--gf);border:0.5px solid var(--gb2)}
 .cal-cell.other-month .cal-num{color:var(--dim)}
 .cal-cell.sunday .cal-num{color:var(--redtext)}
 .cal-cell.saturday .cal-num{color:var(--golddim)}
-.cal-num{font-size:13px;font-weight:400;line-height:1}
-.cal-dots{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;justify-content:center;max-width:100%}
-.cal-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.cal-num{font-size:13px;font-weight:400;line-height:1;text-align:center;position:relative;z-index:1;height:16px;display:flex;align-items:center;justify-content:center}
+.cal-dots{display:flex;gap:3px;justify-content:center;align-items:center;height:8px;margin-top:2px}
+.cal-dot{width:4px;height:4px;min-height:4px;border-radius:50%;flex-shrink:0;display:block;align-self:center}
 .cal-day-row{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);border:0.5px solid var(--bg4);background:var(--bg2);margin-bottom:4px;cursor:pointer;transition:border-color .15s}
 .cal-day-row:active{background:var(--bg3)}
 .cal-day-row.urgent{border-color:var(--redborder);background:var(--redbg)}
 .cal-day-row.soon{border-color:var(--amberborder);background:var(--amberbg)}
+/* ── 阶段任务 ── */
+.phase-purple{border-left:3px solid #9b7ec8!important;background:rgba(155,126,200,.08)!important}
+.phase-badge{background:rgba(155,126,200,.18);color:#c5a8f0;border:0.5px solid rgba(155,126,200,.35);font-size:10px;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.phase-progress-bar{height:4px;background:var(--bg3);border-radius:2px;margin:6px 0 2px;overflow:hidden}
+.phase-progress-fill{height:100%;background:#9b7ec8;border-radius:2px;transition:width .3s}
+.checkin-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.checkin-day{width:36px;height:36px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;border:0.5px solid var(--gb);background:var(--bg3);cursor:pointer;transition:all .15s;flex-shrink:0}
+.checkin-day.done{background:rgba(155,126,200,.25);border-color:#9b7ec8;color:#c5a8f0}
+.checkin-day.today-cell{border-color:#9b7ec8;box-shadow:0 0 0 1.5px #9b7ec8}
+.checkin-day .cd-date{font-size:9px;color:var(--mu);line-height:1}
+.checkin-day .cd-mark{font-size:13px;line-height:1.4}
+.checkin-btn{width:100%;padding:12px;border-radius:var(--rl);background:rgba(155,126,200,.15);border:0.5px solid rgba(155,126,200,.4);color:#c5a8f0;font-size:14px;font-weight:500;cursor:pointer;text-align:center;transition:background .15s;margin-top:8px}
+.checkin-btn:active{background:rgba(155,126,200,.3)}
+.checkin-btn.done-today{background:rgba(155,126,200,.06);color:var(--mu);border-color:var(--gb);pointer-events:none}
+.phase-summary{font-size:12px;color:var(--mu);margin-top:4px}
+.row-phase-tag{font-size:10px;color:#c5a8f0;background:rgba(155,126,200,.15);padding:1px 6px;border-radius:99px;margin-left:4px;white-space:nowrap}
+
 .done-pill{opacity:.55}
 </style>
 </head>
@@ -280,28 +301,27 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       </div>
     </div>
     <div class="tabs">
-      <div class="tab on" onclick="setTab(this,'all')">全部</div>
+      <div class="tab on" onclick="setTab(this,'all');selCat(null)">全部</div>
       <div class="tab" onclick="setTab(this,'urgent')">即将到期</div>
       <div class="tab" onclick="setTab(this,'once')">一次性</div>
       <div class="tab" onclick="setTab(this,'done')">已完成</div>
-    </div>
-    <div class="upcoming" style="margin-bottom:0">
-      <div class="up-hd"><span class="up-t">未来 14 天</span><span class="up-d" id="upRange"></span></div>
-      <div class="up-pills" id="upPills"></div>
+      <div class="tab" onclick="setTab(this,'guide')">使用说明</div>
     </div>
   </div>
   <div class="layout">
     <div class="sidebar">
       <div class="s-lbl">分类</div>
-      <div class="s-item on" id="si_all" onclick="selCat(null)">
-        <span class="s-name">全部</span><span class="s-cnt" id="cnt_all">0</span>
-      </div>
       <div id="catList"></div>
-      <div class="s-add" onclick="goTo('p-add')">+ 新增</div>
     </div>
-    <div class="main-list" id="mainList">
-      <div id="itemList"></div>
-      <div class="add-row" onclick="goTo('p-add')">+ 添加条目</div>
+    <div style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+      <div class="upcoming" style="margin:8px 8px 0;flex-shrink:0">
+        <div class="up-hd"><span class="up-t">未来 14 天</span><span class="up-d" id="upRange"></span></div>
+        <div class="up-pills" id="upPills"></div>
+      </div>
+      <div class="main-list" id="mainList" style="flex:1;overflow-y:auto">
+        <div id="itemList"></div>
+        <div class="add-row" onclick="goTo('p-add')">+ 添加条目</div>
+      </div>
     </div>
   </div>
   <div class="nav">
@@ -343,7 +363,8 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
         <div class="i-name" id="d-name"></div>
         <span class="badge" id="d-badge"></span>
       </div>
-      <div class="i-info" id="d-info"></div>
+      <div class="i-info" id="d-info" onclick="toggleInfo()"></div>
+      <div id="d-info-hint" style="font-size:11px;color:var(--gold2);margin-top:3px;display:none;cursor:pointer" onclick="toggleInfo()">点击展开</div>
     </div>
   </div>
   <div class="scroll">
@@ -386,7 +407,8 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
           <div class="tc" id="dtc1" onclick="dSelTrig(1)"><div class="t">倒计时</div><div class="s">距截止还剩N天</div></div>
           <div class="tc" id="dtc2" onclick="dSelTrig(2)"><div class="t">周期循环</div><div class="s">每日/周/月/季/年</div></div>
           <div class="tc" id="dtc3" onclick="dSelTrig(3)"><div class="t">条件触发</div><div class="s">积分/里程低于X</div></div>
-          <div class="tc" id="dtc4" onclick="dSelTrig(4)" style="grid-column:span 2"><div class="t">无日期</div><div class="s">手动查看，无固定时间点</div></div>
+          <div class="tc" id="dtc5" onclick="dSelTrig(5)"><div class="t">阶段任务</div><div class="s">限时打卡，追踪进度</div></div>
+          <div class="tc" id="dtc4" onclick="dSelTrig(4)"><div class="t">无日期</div><div class="s">手动查看</div></div>
         </div>
       </div>
       <!-- 触发方式动态字段 -->
@@ -442,6 +464,8 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
         <input type="file" id="d-file-lib" accept="*/*" style="display:none" onchange="handleFileD(this)"/>
         <div id="d-attachments" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
       </div>
+      <!-- 阶段任务打卡区（动态渲染） -->
+      <div id="d-checkin-block"></div>
       <div class="field">
         <div class="lbl">紧急程度</div>
         <div class="u-row">
@@ -518,7 +542,8 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
           <div class="tc" id="atc1" onclick="selTrig(1)"><div class="t">倒计时</div><div class="s">距截止还剩N天</div></div>
           <div class="tc" id="atc2" onclick="selTrig(2)"><div class="t">周期循环</div><div class="s">每日/周/月/季/年</div></div>
           <div class="tc" id="atc3" onclick="selTrig(3)"><div class="t">条件触发</div><div class="s">积分/里程低于X</div></div>
-          <div class="tc" id="atc4" onclick="selTrig(4)" style="grid-column:span 2"><div class="t">无日期</div><div class="s">手动查看，无固定时间点</div></div>
+          <div class="tc" id="atc5" onclick="selTrig(5)"><div class="t">阶段任务</div><div class="s">限时打卡，追踪进度</div></div>
+          <div class="tc" id="atc4" onclick="selTrig(4)"><div class="t">无日期</div><div class="s">手动查看</div></div>
         </div>
       </div>
       <!-- 触发方式动态字段 -->
@@ -555,17 +580,21 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
       <!-- 笔记 -->
       <div class="field">
         <div class="lbl">笔记</div>
-        <textarea class="inp" id="a-note" placeholder="金额、账号尾号、渠道、注意事项…" style="min-height:68px;resize:none;word-break:break-all"></textarea>
+        <textarea class="inp" id="a-note" placeholder="备忘、说明、注意事项…" style="min-height:68px;resize:none;word-break:break-all"></textarea>
         <div style="display:flex;gap:8px;margin-top:8px">
-          <div style="flex:1;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--gold2)" onclick="document.getElementById('a-photo-cam').click()">
-            📷 拍照
+          <div class="attach-btn" onclick="document.getElementById('a-photo-cam').click()">
+            <svg viewBox="0 0 20 20" style="width:15px;height:15px;flex-shrink:0"><circle cx="10" cy="11" r="4"/><path d="M1 6h3l2-3h8l2 3h3v11H1z"/></svg>拍照
           </div>
-          <div style="flex:1;background:var(--bg3);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--gold2)" onclick="document.getElementById('a-photo-lib').click()">
-            🖼 相册
+          <div class="attach-btn" onclick="document.getElementById('a-photo-lib').click()">
+            <svg viewBox="0 0 20 20" style="width:15px;height:15px;flex-shrink:0"><rect x="2" y="4" width="16" height="13" rx="2"/><circle cx="7" cy="9" r="1.5"/><path d="M2 14l4-4 3 3 3-4 6 5"/></svg>相册
+          </div>
+          <div class="attach-btn" onclick="document.getElementById('a-file-lib').click()">
+            <svg viewBox="0 0 20 20" style="width:15px;height:15px;flex-shrink:0"><path d="M4 2h8l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><polyline points="12,2 12,6 16,6"/></svg>文件
           </div>
         </div>
         <input type="file" id="a-photo-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this,'a-photos')"/>
         <input type="file" id="a-photo-lib" accept="image/*" style="display:none" onchange="handlePhoto(this,'a-photos')"/>
+        <input type="file" id="a-file-lib" accept="*/*" style="display:none" onchange="handlePhoto(this,'a-photos')"/>
         <div id="a-photos" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
       </div>
       <div style="height:0.5px;background:var(--gb)"></div>
@@ -602,14 +631,14 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
   <div style="flex-shrink:0">
     <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:3px">
       <div style="font-size:11px;color:var(--mu)" id="r-today"></div>
-      <div style="font-size:20px;font-weight:500">未来 14 天 <em style="color:var(--gold);font-size:14px;font-weight:400">全景图</em></div>
+      <div style="font-size:20px;font-weight:500">周报总结</div>
       <div style="font-size:12px;color:var(--mu)" id="r-range"></div>
     </div>
   </div>
   <div class="scroll">
-    <div class="rpt-stats" id="rpt-stats"></div>
+    <div id="rpt-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 16px"></div>
     <div class="rpt-sec">
-      <div class="sec-hd"><span class="sec-lbl">按紧急程度排列</span><span class="sec-line"></span></div>
+      <div class="sec-hd"><span class="sec-lbl">未来14天事项</span><span class="sec-line"></span></div>
       <div id="rpt-list"></div>
     </div>
     <div class="watch-card">
@@ -716,6 +745,14 @@ html,body{height:100%;background:var(--bg);color:var(--w);font-family:-apple-sys
         </div>
       </div>
 
+      <!-- 阶段任务调试 -->
+      <div style="margin-bottom:12px">
+        <div class="lbl" style="margin-bottom:8px">阶段任务数据</div>
+        <div id="mine-phase-debug" style="background:var(--bg2);border:0.5px solid var(--gb);border-radius:var(--r);padding:10px"></div>
+      </div>
+
+      <div style="height:0.5px;background:var(--gb);margin:16px 0"></div>
+
       <!-- 导出 -->
       <div style="margin-bottom:12px">
         <div class="lbl" style="margin-bottom:8px">导出数据</div>
@@ -783,11 +820,14 @@ const ITEMS = JSON.parse('[{"cat":"\u91d1\u878d\u4fe1\u7528","sub":"\u4fe1\u7528
 // 工具 & 常量
 // ══════════════════════════════════════════════
 const CAT_COLORS={
-  '金融信用':'#c0392b','证件法律':'#c9a84c','税务合规':'#1D9E75','合同':'#0F6E56',
-  '职业发展':'#378ADD','会员权益':'#c9a84c','订阅':'#5b8dd9','健康医疗':'#c4607a',
-  '教育成长':'#639922','资产':'#D85A30','出行规划':'#7F77DD','优惠券':'#BA7517',
-  '社交生活':'#9b7ec8','复盘':'#BA7517','家庭家居':'#888780','数字生活':'#3a9e8a',
-  '个人卫生':'#5ba08a'
+  '金融信用':'#c0392b','证件管理':'#c9a84c','税务合规':'#1D9E75','合同管理':'#0F6E56',
+  '职业发展':'#378ADD','会员权益':'#c9a84c','订阅服务':'#5b8dd9',
+  '健康医疗':'#c4607a','健康医疗':'#c4607a',
+  '教育成长':'#639922','教育成长':'#639922',
+  '财务资产':'#D85A30','交通出行':'#7F77DD','会员权益':'#BA7517',
+  '社交生活':'#9b7ec8','社交生活':'#9b7ec8',
+  '复盘规划':'#BA7517','家庭家居':'#888780','数字生活':'#3a9e8a',
+  '个人卫生':'#5ba08a','假期规划':'#7F77DD'
 };
 const UL={r:'紧急',a:'即将',g:'正常'};
 const UC={r:'bdg-r',a:'bdg-a',g:'bdg-g'};
@@ -802,26 +842,24 @@ let aTrig=0;
 
 // ── 分类数据（动态维护）─────────────────────────────
 const CAT_SUBS={
-  '金融信用':['信用卡还款','房贷月供','花呗借呗','房租缴纳','保险缴费','理财到期'],
-  '证件法律':['身份证','护照','签证','驾照','居住证','合同续签'],
-  '税务合规':['个税汇算','个税退税','社保公积金','发票管理'],
-  '合同':['租房合同','域名续费','服务合同'],
-  '职业发展':['工作截止','报销','证书','简历','行业大会','学习成长','人脉维护'],
-  '会员权益':['视频会员','电商会员','健身卡','酒店积分','积分清零','停车卡','生日礼'],
-  '订阅':['软件订阅','健身卡'],
-  '健康医疗':['年度体检','慢性病复诊','处方药续开','儿童疫苗','牙科','眼科','运动健身','营养剂补充','心理健康','儿童健康','妇科检查'],
-  '教育成长':['学费缴纳','考试报名','选课报名','证书考试','阅读计划'],
-  '资产':['理财到期','股票基金','房产','外币'],
-  '出行规划':['订票','签注','护照签证'],
-  '优惠券':['平台券','线下券'],
-  '社交生活':['家人生日','重要纪念日','朋友生日','节日礼物','人情往来','家庭聚会'],
-  '复盘':['目标回顾','财务复盘','健康复盘'],
-  '家庭家居':['水电煤缴费','供暖','物业费','家电维护','安全检查','租约合同','话费流量','宠物','绿植','车辆'],
-  '数字生活':['账号安全','云盘','备份','数字资产','设备'],
-  '个人卫生':['理发造型','洗澡','洗脚','指甲护理','护肤'],
+  '金融信用':['信用卡还款','房贷扣款','收租日','租房缴纳','保险缴费'],
+  '证件管理':['身份证','护照','签证','驾照','居住证','香港人才'],
+  '税务合规':['个税汇算','个税退税','社保公积金','基数调整'],
+  '合同管理':['租房合同','域名续费'],
+  '职业发展':['报销','工作deadline','证书','报考','KPI','简历','行业大会','面试'],
+  '会员权益':['酒店积分保级','信用卡年费','品牌积分','饮料会员','服装会员','美妆会员','珠宝会员','饭店会员','图书会员','电商会员','免税店','生日礼','平台券','线下券'],
+  '订阅服务':['视频会员','音乐会员','软件订阅','云存储','健身App','停车卡'],
+  '健康医疗':['体检','复诊','处方药','疫苗','吃药','牙科','宠物','献血'],
+  '教育成长':['学费','补习班','竞赛','比赛','考试'],
+  '财务资产':['理财到期','公积金医保','股票','外币'],
+  '交通出行':['订票'],'会员权益':['平台券'],
+  '社交生活':['家人生日','朋友','父母','同事','人情'],
+  '复盘规划':['目标回顾','税务'],
+  '家庭家居':['家电','车辆','安全','应急','家务','话费'],
+  '数字生活':['云盘','账号安全','备份','数字资产']
 };
 // 动态维护大分类和子分类列表
-let A_CATS=['金融信用','证件法律','税务合规','合同','职业发展','会员权益','订阅','健康医疗','教育成长','资产','出行规划','优惠券','社交生活','复盘','家庭家居','数字生活','个人卫生'];
+let A_CATS=[...new Set(ITEMS.map(d=>d.cat))];
 function getCatSubList(cat){ return CAT_SUBS[cat]?[...CAT_SUBS[cat]]:[] }
 
 // ══════════════════════════════════════════════
@@ -936,24 +974,24 @@ function renderTrigFields(pfx, trig, vals){
   const el=document.getElementById(pfx+'-trig-fields');
   let html='';
   if(trig===0){
-    // 固定日期: 日期 + 可选时间
+    // 固定日期: 日历选择 + 可选时间
     html=`<div class="field">
       <div class="lbl">日期</div>
-      <div style="display:flex;gap:8px">
-        <input class="inp" id="${pfx}-tf-date" placeholder="如 2026/12/04 或 每月16日" style="flex:2" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
-        <input class="inp" id="${pfx}-tf-time" type="time" placeholder="HH:MM" style="flex:1;min-width:90px" value="${vals.time||''}"/>
+      <input class="inp" id="${pfx}-tf-date" type="date" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
+      <div style="margin-top:8px">
+        <div class="lbl" style="margin-bottom:6px">时间 <span class="lbl-note">可选，留空表示全天</span></div>
+        <input class="inp" id="${pfx}-tf-time" type="time" value="${vals.time||''}" style="width:140px"/>
       </div>
-      <div style="font-size:11px;color:var(--mu);margin-top:5px">时间可选，留空表示全天提醒</div>
     </div>`;
   } else if(trig===1){
-    // 倒计时: 截止日期 + 可选时间
+    // 倒计时: 截止日历 + 可选时间
     html=`<div class="field">
       <div class="lbl">截止日期</div>
-      <div style="display:flex;gap:8px">
-        <input class="inp" id="${pfx}-tf-date" placeholder="如 2026/12/31" style="flex:2" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
-        <input class="inp" id="${pfx}-tf-time" type="time" placeholder="HH:MM" style="flex:1;min-width:90px" value="${vals.time||''}"/>
+      <input class="inp" id="${pfx}-tf-date" type="date" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
+      <div style="margin-top:8px">
+        <div class="lbl" style="margin-bottom:6px">时间 <span class="lbl-note">可选，留空表示全天</span></div>
+        <input class="inp" id="${pfx}-tf-time" type="time" value="${vals.time||''}" style="width:140px"/>
       </div>
-      <div style="font-size:11px;color:var(--mu);margin-top:5px">时间可选，留空表示全天</div>
     </div>`;
   } else if(trig===2){
     // 周期循环: 循环周期 → 开始日期 → 结束日期 → 具体时间 → 提前提醒
@@ -969,15 +1007,15 @@ function renderTrigFields(pfx, trig, vals){
     </div>
     <div class="field">
       <div class="lbl">开始日期</div>
-      <input class="inp" id="${pfx}-tf-date" placeholder="如 2026/05/01" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
+      <input class="inp" id="${pfx}-tf-date" type="date" value="${escHtml(vals.date||'')}" oninput="${pfx==='a'?'updatePv()':''}"/>
     </div>
     <div class="field">
       <div class="lbl">结束日期 <span class="lbl-note">可选</span></div>
-      <input class="inp" id="${pfx}-tf-enddate" placeholder="如 2027/12/31" value="${escHtml(vals.enddate||'')}"/>
+      <input class="inp" id="${pfx}-tf-enddate" type="date" value="${escHtml(vals.enddate||'')}"/>
     </div>
     <div class="field">
       <div class="lbl">具体时间 <span class="lbl-note">可选</span></div>
-      <input class="inp" id="${pfx}-tf-time" type="time" placeholder="HH:MM" value="${vals.time||''}" oninput="onCycleTimeInput('${pfx}')"/>
+      <input class="inp" id="${pfx}-tf-time" type="time" value="${vals.time||''}" style="width:140px" oninput="onCycleTimeInput('${pfx}')"/>
     </div>
     <div class="field" id="${pfx}-advance-hours-field" style="display:${vals.cycle==='daily'||vals.time?'flex':'none'};flex-direction:column">
       <div class="lbl">提前提醒</div>
@@ -1000,11 +1038,50 @@ function renderTrigFields(pfx, trig, vals){
       <div class="lbl">条件描述</div>
       <input class="inp" id="${pfx}-tf-date" placeholder="如：积分低于5000时提醒" value="${escHtml(vals.date||'')}"/>
     </div>`;
+  } else if(trig===5){
+    // 阶段任务
+    const todayVal=new Date().toISOString().slice(0,10);
+    html=`<div class="field">
+      <div class="lbl">开始日期 <span class="lbl-note">留空则从今天开始</span></div>
+      <input class="inp" id="${pfx}-tf-date" type="date" value="${vals.date||todayVal}" oninput="${pfx==='a'?'updatePv()':''}"/>
+    </div>
+    <div class="field">
+      <div class="lbl">结束日期</div>
+      <input class="inp" id="${pfx}-tf-enddate" type="date" value="${vals.enddate||''}"/>
+    </div>
+    <div class="field">
+      <div class="lbl">打卡频率</div>
+      <div class="seg" id="${pfx}-phase-freq-seg">
+        <div class="si${!vals.freq||vals.freq==='daily'?' on':''}" onclick="selPhaseFreq('${pfx}','daily')">每日</div>
+        <div class="si${vals.freq==='weekly'?' on':''}" onclick="selPhaseFreq('${pfx}','weekly')">每周X次</div>
+        <div class="si${vals.freq==='custom'?' on':''}" onclick="selPhaseFreq('${pfx}','custom')">自定义</div>
+      </div>
+      <div id="${pfx}-phase-freq-detail" style="margin-top:8px;display:${vals.freq&&vals.freq!=='daily'?'block':'none'}">
+        <input class="inp" id="${pfx}-tf-freqval" placeholder="${vals.freq==='weekly'?'每周几次，如3':'具体说明，如每周一三五'}" style="font-size:13px" value="${escHtml(vals.freqval||'')}"/>
+      </div>
+    </div>
+    <div class="field">
+      <div class="lbl">目标次数 <span class="lbl-note">留空按日期自动计算</span></div>
+      <input class="inp" id="${pfx}-tf-target" type="number" min="1" placeholder="如 5" value="${vals.target||''}" style="font-size:13px"/>
+    </div>`;
   } else {
     // 无日期: 不显示
     html='';
   }
   el.innerHTML=html;
+}
+
+function selPhaseFreq(pfx, freq){
+  document.querySelectorAll(`#${pfx}-phase-freq-seg .si`).forEach(e=>e.classList.remove('on'));
+  const idx={daily:0,weekly:1,custom:2}[freq];
+  const segs=document.querySelectorAll(`#${pfx}-phase-freq-seg .si`);
+  if(segs[idx])segs[idx].classList.add('on');
+  const detail=document.getElementById(pfx+'-phase-freq-detail');
+  if(detail){
+    detail.style.display=freq!=='daily'?'block':'none';
+    const inp=document.getElementById(pfx+'-tf-freqval');
+    if(inp)inp.placeholder=freq==='weekly'?'每周几次，如3':'具体说明，如每周一三五';
+  }
 }
 
 function selCycle(pfx, cyc){
@@ -1028,15 +1105,25 @@ function getTrigVals(pfx){
   const enddateEl=document.getElementById(pfx+'-tf-enddate');
   const timeEl=document.getElementById(pfx+'-tf-time');
   const advEl=document.getElementById(pfx+'-tf-advance');
+  const targetEl=document.getElementById(pfx+'-tf-target');
+  const freqvalEl=document.getElementById(pfx+'-tf-freqval');
   const cycs=['daily','weekly','monthly','quarterly','yearly'];
   let cycle='';
   cycs.forEach(c=>{const e=document.getElementById(pfx+'-cy-'+c);if(e&&e.classList.contains('on'))cycle=c;});
+  // phase freq
+  let freq='daily';
+  const freqSegs=document.querySelectorAll(`#${pfx}-phase-freq-seg .si`);
+  const freqLabels=['daily','weekly','custom'];
+  freqSegs.forEach((e,i)=>{if(e.classList.contains('on'))freq=freqLabels[i];});
   return {
     date: dateEl?dateEl.value.trim():'',
     enddate: enddateEl?enddateEl.value.trim():'',
     time: timeEl?timeEl.value:'',
     cycle: cycle,
     advance: advEl?advEl.value.trim():'',
+    target: targetEl?targetEl.value.trim():'',
+    freq: freq,
+    freqval: freqvalEl?freqvalEl.value.trim():'',
   };
 }
 
@@ -1077,7 +1164,7 @@ function goTo(id){
   if(cur===id)return;
   if(cur){
     const curEl=document.getElementById(cur);
-    if(curEl){curEl.classList.add('slide-left');}
+    if(curEl){curEl.style.display='none';curEl.classList.add('hidden');}
   }
   pageStack.push(id);
   const next=document.getElementById(id);
@@ -1121,22 +1208,25 @@ function renderHome(){
 function buildSidebar(){
   const counts={};
   ITEMS.forEach(d=>{counts[d.cat]=(counts[d.cat]||0)+1});
-  document.getElementById('cnt_all').textContent=ITEMS.length;
-  // 用动态 A_CATS，包含用户新增的分类
   document.getElementById('catList').innerHTML=A_CATS.map(c=>`
     <div class="s-item${activeCat===c?' on':''}" onclick="selCat('${c}')">
       <span class="s-dot" style="background:${CAT_COLORS[c]||'#888'}"></span>
       <span class="s-name">${c}</span>
       <span class="s-cnt">${counts[c]||0}</span>
     </div>`).join('');
-  document.getElementById('si_all').classList.toggle('on',!activeCat);
 }
 function selCat(n){
   activeCat=n;buildSidebar();renderItems();
 }
 function setTab(el,k){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');activeTab=k;renderItems();
+  el.classList.add('on');
+  activeTab=k;
+  if(k==='guide'){
+    renderGuide();
+  } else {
+    renderItems();
+  }
 }
 function setChip(el,k){
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
@@ -1147,12 +1237,159 @@ function getFiltered(){
   if(activeTab==='urgent')L=L.filter(d=>d.u==='r'||d.u==='a');
   if(activeTab==='once')L=L.filter(d=>d.type==='once');
   if(activeTab==='done')L=L.filter(d=>d.done);
+  if(activeTab==='guide')return [];
   if(activeChip==='urgent')L=L.filter(d=>d.u==='r');
   if(activeChip==='yearly')L=L.filter(d=>d.type==='yearly');
   if(activeChip==='cycle')L=L.filter(d=>d.type==='cycle');
   if(activeChip==='once')L=L.filter(d=>d.type==='once');
   return L;
 }
+// ── 阶段任务辅助函数 ─────────────────────────────
+function phaseGetDays(item){
+  // 返回阶段任务的所有日期字符串数组 ['2026-05-01', ...]
+  if(!item.date||!item.enddate) return [];
+  const days=[];
+  let cur=new Date(item.date);
+  const end=new Date(item.enddate);
+  while(cur<=end){
+    days.push(cur.toISOString().slice(0,10));
+    cur.setDate(cur.getDate()+1);
+  }
+  return days;
+}
+function phaseCheckins(item){return item.checkins||[];}
+function phaseTarget(item){
+  if(item.phaseTarget) return parseInt(item.phaseTarget);
+  return phaseGetDays(item).length||1;
+}
+function phaseProgress(item){
+  const done=phaseCheckins(item).length;
+  const total=phaseTarget(item);
+  return `${done}/${total}`;
+}
+function phasePercent(item){
+  const done=phaseCheckins(item).length;
+  const total=phaseTarget(item);
+  return Math.round(Math.min(done/Math.max(total,1)*100,100));
+}
+function phaseIsComplete(item){
+  return phaseCheckins(item).length>=phaseTarget(item);
+}
+function phaseCheckinToday(idx){
+  const item=ITEMS[idx];
+  const today=new Date().toISOString().slice(0,10);
+  if(!item.checkins)item.checkins=[];
+  if(item.checkins.includes(today)){
+    // 补打已有 → 取消
+    item.checkins=item.checkins.filter(d=>d!==today);
+  } else {
+    item.checkins.push(today);
+  }
+  // 检查是否完成
+  if(phaseIsComplete(item)){
+    item.done=true;
+  }
+  refreshAll();
+  renderCheckinBlock(idx);
+}
+function phaseCheckinDate(idx, dateStr){
+  const item=ITEMS[idx];
+  if(!item.checkins)item.checkins=[];
+  if(item.checkins.includes(dateStr)){
+    item.checkins=item.checkins.filter(d=>d!==dateStr);
+  } else {
+    item.checkins.push(dateStr);
+  }
+  if(phaseIsComplete(item)) item.done=true;
+  refreshAll();
+  renderCheckinBlock(idx);
+}
+function renderCheckinBlock(idx){
+  const el=document.getElementById('d-checkin-block');
+  if(!el)return;
+  const item=ITEMS[idx];
+  const days=phaseGetDays(item);
+  const checkins=phaseCheckins(item);
+  const today=new Date().toISOString().slice(0,10);
+  const done=checkins.length;
+  const total=phaseTarget(item);
+  const pct=phasePercent(item);
+  const todayDone=checkins.includes(today);
+  el.innerHTML=`
+    <div class="field">
+      <div class="lbl" style="color:#c5a8f0">打卡进度</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div style="flex:1">
+          <div class="phase-progress-bar" style="margin:0"><div class="phase-progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div style="font-size:13px;color:#c5a8f0;white-space:nowrap;font-weight:500">${done}/${total}</div>
+      </div>
+      <div class="phase-summary">${item.date||''} — ${item.enddate||''}</div>
+      <div class="checkin-grid">
+        ${days.map(d=>{
+          const md=d.slice(5);// MM-DD
+          const isDone=checkins.includes(d);
+          const isToday=d===today;
+          return`<div class="checkin-day${isDone?' done':''}${isToday?' today-cell':''}" onclick="phaseCheckinDate(${idx},'${d}')">
+            <span class="cd-date">${md}</span>
+            <span class="cd-mark">${isDone?'√':isToday?'·':''}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="checkin-btn${todayDone?' done-today':''}" onclick="phaseCheckinToday(${idx})">
+        ${todayDone?'今日已打卡（点击取消）':'今日打卡'}
+      </div>
+    </div>`;
+}
+
+function renderGuide(){
+  document.getElementById('itemList').innerHTML=`
+  <div style="padding:12px 4px 24px;line-height:1.8;color:var(--w)">
+    <div style="font-size:15px;font-weight:600;color:var(--gold2);margin-bottom:10px">这是什么？</div>
+    <div style="font-size:13px;color:var(--mu);margin-bottom:16px">
+      Sunny Calendar 是一款个人生活事务提醒与笔记工具，帮你管理那些容易忘记但又很重要的事——证件到期、会员续费、账单还款、健康体检、孩子考试……把它们统一收纳，按时间维度呈现，不再靠脑子记。<br><br>
+      每个事项都可以附上笔记、随手拍的照片或文件，想法、截图、单据随时存进来，和事项绑定在一起，到时间自然就能找到。
+    </div>
+
+    <div style="font-size:15px;font-weight:600;color:var(--gold2);margin-bottom:10px">快速上手</div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px">① 新建条目</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:8px">点右上角 + 号，选择大分类和子分类，填写条目名称，选择触发方式：</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">固定日期</span>：某个具体日子到了提醒你（如护照2027/12到期）</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">倒计时</span>：距截止还剩多少天（如合同90天后到期）</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">周期循环</span>：每月/每周/每年重复发生（如信用卡每月还款）</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">阶段任务</span>：有开始和结束日期、需要每日打卡的计划（如五一读书5天）</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">条件触发</span>：满足某个条件时提醒（如积分低于5000）</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:12px">· <span style="color:var(--w)">无日期</span>：只是想记录，不需要时间提醒</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:16px;background:var(--bg2);border-left:3px solid var(--golddim);padding:8px 10px;border-radius:0 var(--r) var(--r) 0">
+      <span style="color:var(--gold2)">分类完全自定义</span>：内置17个大分类供快速使用，可随时在下拉框中输入新名称点「+ 新增」创建大分类或子分类。不再需要的分类，删除该分类下所有条目后自动消失。
+    </div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px">② 条目操作</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">点击左侧小方框</span> → 标记完成，条目划线变灰留存</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· 在顶部「已完成」tab 里可找回并恢复</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">向左横滑条目</span> → 出现红色删除按钮，点击永久删除</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:16px">· <span style="color:var(--w)">点击条目任意位置</span> → 进入详情页，可编辑字段、添加笔记和附件</div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px">③ 看什么</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">首页左侧</span>：按大分类筛选</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">未来14天</span>：右侧顶部，快速看即将发生的事，点击或 × 标记完成</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:4px">· <span style="color:var(--w)">日历</span>：按月查看，彩色小点代表当天有事项</div>
+    <div style="font-size:12px;color:var(--mu);padding-left:8px;margin-bottom:16px">· <span style="color:var(--w)">周报</span>：过去/本周/下周完成情况，及未来14天事项详情</div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px">④ 颜色含义</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div style="width:3px;height:16px;background:#c0392b;border-radius:2px;flex-shrink:0"></div><span style="color:var(--mu)">红色边框 = 紧急，需要立刻处理</span></div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div style="width:3px;height:16px;background:#c9a84c;border-radius:2px;flex-shrink:0"></div><span style="color:var(--mu)">金色边框 = 即将，14天内会发生</span></div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div style="width:3px;height:16px;background:#1D9E75;border-radius:2px;flex-shrink:0"></div><span style="color:var(--mu)">绿色边框 = 正常，时间还充裕</span></div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div style="width:3px;height:16px;background:#9b7ec8;border-radius:2px;flex-shrink:0"></div><span style="color:var(--mu)">紫色边框 = 阶段任务进行中</span></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px">⑤ 数据安全</div>
+    <div style="font-size:12px;color:var(--mu)">数据存在你的设备本地，不会上传任何服务器。建议定期去「我的」→「导出数据」备份，换设备时「导入」即可恢复全部数据。</div>
+  </div>`;
+}
+
 function renderItems(){
   const list=getFiltered();
   const grps={};
@@ -1166,10 +1403,14 @@ function renderItems(){
         const idx=ITEMS.indexOf(item);
         return`<div class="row-wrap" id="rw-${idx}">
           <div class="row-inner" id="ri-${idx}">
-            <div class="row${item.u==='r'?' urgent':item.u==='a'?' soon':''}${item.done?' done-item':''}" id="row-${idx}" onclick="rowClick(event,${idx})" ontouchstart="swipeStart(event,${idx})" ontouchmove="swipeMove(event,${idx})" ontouchend="swipeEnd(event,${idx})">
+            <div class="row${item.u==='r'?' urgent':item.u==='a'?' soon':item.type==='phase'?' phase-purple':''}${item.done?' done-item':''}" id="row-${idx}" onclick="rowClick(event,${idx})" ontouchstart="swipeStart(event,${idx},'')" ontouchmove="swipeMove(event,${idx},'')" ontouchend="swipeEnd(event,${idx},'')">
               <div class="chk${item.done?' on':''}" onclick="event.stopPropagation();toggleDone(${idx})"></div>
-              <div style="min-width:0"><div class="rn">${item.name}</div><div class="rs">${item.sub}${item.info?' · '+item.info:''}</div></div>
-              <div class="r-right"><span class="badge ${UC[item.u]}">${UL[item.u]}</span><div class="r-date">${item.date||'—'}</div></div>
+              <div style="min-width:0">
+                <div class="rn">${item.name}${item.type==='phase'?`<span class="row-phase-tag">${phaseProgress(item)}</span>`:''}</div>
+                <div class="rs">${item.sub}${item.info?' · '+item.info:''}</div>
+                ${item.type==='phase'?`<div class="phase-progress-bar"><div class="phase-progress-fill" style="width:${phasePercent(item)}%"></div></div>`:''}
+              </div>
+              <div class="r-right"><span class="badge ${item.type==='phase'?'phase-badge':UC[item.u]}">${item.type==='phase'?'阶段':UL[item.u]}</span><div class="r-date">${item.date||'—'}</div></div>
             </div>
             <div class="row-del-bg" onclick="swipeDelete(${idx})">删除</div>
           </div>
@@ -1187,40 +1428,254 @@ function toggleDone(idx){
 function refreshAll(){
   renderItems();
   renderUpcoming();
-  // 如果周报/日历页当前可见，同步刷新
   if(pageStack.includes('p-report')) renderReport();
   if(pageStack.includes('p-calendar')) renderCalendar();
   saveToLocal();
 }
+
+// ── 辅助：判断条目是否在未来14天内 ──────────────
+function itemDateStr(item){
+  // 返回 'YYYY-MM-DD' 或 null
+  if(item.type==='phase'){
+    const s=item.date||'';
+    const e=item.enddate||'';
+    const today=new Date().toISOString().slice(0,10);
+    // date 为空时用今天作为开始日（兼容旧数据）
+    const ms=s.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+    const startStr=ms?`${ms[1]}-${ms[2].padStart(2,'0')}-${ms[3].padStart(2,'0')}`:today;
+    if(e){
+      const me=e.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+      if(me){
+        const endStr=`${me[1]}-${me[2].padStart(2,'0')}-${me[3].padStart(2,'0')}`;
+        if(startStr<=today && today<=endStr) return today;
+      }
+    }
+    return startStr;
+  }
+  const s=item.date||'';
+  let m=s.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+  if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  m=s.match(/每月(\d{1,2})[日号]/);
+  if(m){
+    const today=new Date();
+    const day=parseInt(m[1]);
+    let t=new Date(today.getFullYear(),today.getMonth(),day);
+    if(t<today) t=new Date(today.getFullYear(),today.getMonth()+1,day);
+    return t.toISOString().slice(0,10);
+  }
+  m=s.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if(m){
+    const today=new Date();
+    let t=new Date(today.getFullYear(),parseInt(m[1])-1,parseInt(m[2]));
+    if(t<today) t=new Date(today.getFullYear()+1,parseInt(m[1])-1,parseInt(m[2]));
+    return t.toISOString().slice(0,10);
+  }
+  return null;
+}
+
+function getItemDotColor(item){
+  if(item.type==='phase') return '#9b7ec8';
+  if(item.done) return '#555';
+  if(item.u==='r') return '#c0392b'; // 紧急→红
+  if(item.u==='a') return '#c9a84c'; // 即将→黄
+  return '#1D9E75'; // 正常→绿
+}
+
+function isInNext14Days(item){
+  if(item.done) return false;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const end14=new Date(today); end14.setDate(end14.getDate()+14);
+  // 阶段任务单独处理
+  if(item.type==='phase'){
+    const s=item.date||''; const e=item.enddate||'';
+    const ms=s.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+    // date为空时用今天作为开始（兼容旧数据）
+    const startD=ms?new Date(`${ms[1]}-${ms[2].padStart(2,'0')}-${ms[3].padStart(2,'0')}`):today;
+    if(e){
+      const me=e.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+      if(me){
+        const endD=new Date(`${me[1]}-${me[2].padStart(2,'0')}-${me[3].padStart(2,'0')}`);
+        return startD<=end14 && endD>=today;
+      }
+    }
+    return startD>=today && startD<=end14;
+  }
+  const ds=itemDateStr(item);
+  if(!ds) return false;
+  const d=new Date(ds);
+  return d>=today && d<=end14;
+}
+
+
+// ── 通用可点击卡片（周报/日历/14天共用）──────────
+function makeItemCard(item, idx, opts){
+  opts=opts||{};
+  const isPhase=item.type==='phase';
+  const urgCls=item.u==='r'?'urgent':item.u==='a'?'soon':isPhase?'phase-purple':'';
+  const badge=isPhase
+    ?`<span class="badge phase-badge">阶段</span>`
+    :`<span class="badge ${UC[item.u]}">${UL[item.u]}</span>`;
+  const progress=isPhase
+    ?`<div class="phase-progress-bar" style="margin-top:4px"><div class="phase-progress-fill" style="width:${phasePercent(item)}%"></div></div>`:'';
+  const dateStr=(opts.showDate!==false&&item.date)
+    ?`<div class="r-date" style="font-size:10px;color:var(--mu);text-align:right">${fmtDate(item.date)}</div>`
+    :'';
+  return `<div class="row-wrap" id="rw-c-${idx}" style="margin-bottom:4px">
+    <div class="row-inner" id="ri-c-${idx}">
+      <div class="row ${urgCls}${item.done?' done-item':''}" style="border-radius:var(--rl)"
+        id="row-c-${idx}"
+        onclick="cardClick(event,${idx},'c')"
+        ontouchstart="swipeStart(event,${idx},'c')"
+        ontouchmove="swipeMove(event,${idx},'c')"
+        ontouchend="swipeEnd(event,${idx},'c')">
+        <div class="chk${item.done?' on':''}" onclick="event.stopPropagation();toggleDone(${idx})"></div>
+        <div style="min-width:0;flex:1">
+          <div class="rn" style="font-size:13px">${item.name}${isPhase?`<span class="row-phase-tag">${phaseProgress(item)}</span>`:''}</div>
+          <div class="rs">${item.sub}${item.info?' · '+item.info:''}</div>
+          ${progress}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+          ${badge}
+          ${dateStr}
+        </div>
+      </div>
+      <div class="row-del-bg" onclick="cardDelete(${idx})">删除</div>
+    </div>
+  </div>`;
+}
+
+let _cardSwipe={idx:-1,startX:0,startY:0,moved:false,swiped:false,ns:''};
+let _cardSwipedIdx=-1;
+
+function cardClick(e,idx,ns){
+  if(_cardSwipedIdx===idx){cardSnapBack(idx);return;}
+  if(_cardSwipedIdx>=0)cardSnapBack(_cardSwipedIdx);
+  openDetail(idx);
+}
+function swipeStart(e,idx,ns){
+  if(e.touches.length!==1)return;
+  ns=ns||'';
+  const isMain=ns==='';
+  const swiped=isMain?(_swipedIdx===idx):(_cardSwipedIdx===idx);
+  _cardSwipe={idx,startX:e.touches[0].clientX,startY:e.touches[0].clientY,moved:false,swiped,ns};
+  if(isMain){if(_swipedIdx>=0&&_swipedIdx!==idx)snapBack(_swipedIdx);}
+  else{if(_cardSwipedIdx>=0&&_cardSwipedIdx!==idx)cardSnapBack(_cardSwipedIdx);}
+}
+function swipeMove(e,idx,ns){
+  if(_cardSwipe.idx!==idx)return;
+  const dx=e.touches[0].clientX-_cardSwipe.startX;
+  const dy=e.touches[0].clientY-_cardSwipe.startY;
+  if(!_cardSwipe.moved&&Math.abs(dy)>Math.abs(dx))return;
+  _cardSwipe.moved=true;
+  e.preventDefault();
+  const riId=_cardSwipe.ns===''?`ri-${idx}`:`ri-c-${idx}`;
+  const ri=document.getElementById(riId);
+  if(!ri)return;
+  const base=_cardSwipe.swiped?-80:0;
+  const offset=Math.min(0,Math.max(-80,base+dx));
+  ri.style.transition='none';
+  ri.style.transform=`translateX(${offset}px)`;
+}
+function swipeEnd(e,idx,ns){
+  if(_cardSwipe.idx!==idx||!_cardSwipe.moved)return;
+  const dx=e.changedTouches[0].clientX-_cardSwipe.startX;
+  const isMain=_cardSwipe.ns==='';
+  const riId=isMain?`ri-${idx}`:`ri-c-${idx}`;
+  const ri=document.getElementById(riId);
+  if(!ri)return;
+  ri.style.transition='';
+  const base=_cardSwipe.swiped?-80:0;
+  if(base+dx<-40){
+    ri.style.transform='translateX(-80px)';
+    ri.classList.add('swiped');
+    if(isMain)_swipedIdx=idx;
+    else _cardSwipedIdx=idx;
+  } else {
+    if(isMain)snapBack(idx);
+    else cardSnapBack(idx);
+  }
+}
+function cardSnapBack(idx){
+  ['ri-c-','ri-'].forEach(pfx=>{
+    const el=document.getElementById(pfx+idx);
+    if(el){el.style.transform='';el.classList.remove('swiped');}
+  });
+  if(_cardSwipedIdx===idx)_cardSwipedIdx=-1;
+}
+function cardDelete(idx){
+  if(_cardSwipedIdx!==idx)return;
+  const name=ITEMS[idx].name;
+  ITEMS.splice(idx,1);
+  _cardSwipedIdx=-1;
+  refreshAll();
+  toast(`已删除「${name}」`);
+}
+
 function renderUpcoming(){
-  const today=new Date();
-  const end=new Date(today);end.setDate(end.getDate()+14);
-  document.getElementById('upRange').textContent=`${today.getMonth()+1}/${today.getDate()} — ${end.getMonth()+1}/${end.getDate()}`;
-  const urgent=ITEMS.filter(d=>d.u==='r'||d.u==='a').slice(0,6);
-  document.getElementById('upPills').innerHTML=urgent.map((d,i)=>{
-    const realIdx=ITEMS.indexOf(d);
-    return`<span class="pill ${d.u==='r'?'pill-r':d.u==='a'?'pill-a':'pill-n'}${d.done?' done-pill':''}">
-      <span style="${d.done?'text-decoration:line-through;opacity:.5':''}">${d.name}${d.date?' · '+d.date:''}</span>
-      <span class="pill-x" onclick="event.stopPropagation();pillDone(${realIdx})" title="标记完成">×</span>
+  const today=new Date(); today.setHours(0,0,0,0);
+  const end14=new Date(today); end14.setDate(end14.getDate()+14);
+  document.getElementById('upRange').textContent=`${today.getMonth()+1}/${today.getDate()} — ${end14.getMonth()+1}/${end14.getDate()}`;
+  const list=ITEMS.filter(item=>isInNext14Days(item));
+  list.sort((a,b)=>{
+    const da=itemDateStr(a)||'9999';
+    const db=itemDateStr(b)||'9999';
+    return da<db?-1:da>db?1:0;
+  });
+  const el=document.getElementById('upPills');
+  if(!list.length){
+    el.innerHTML=`<div style="color:var(--mu);font-size:11px;padding:4px 0">暂无事项</div>`;
+    return;
+  }
+  el.innerHTML=list.map(item=>{
+    const idx=ITEMS.indexOf(item);
+    const isPhase=item.type==='phase';
+    // 颜色：阶段紫/紧急红/即将黄/正常绿
+    let pillCls='pill-n';
+    if(isPhase) pillCls='pill-phase';
+    else if(item.u==='r') pillCls='pill-r';
+    else if(item.u==='a') pillCls='pill-a';
+    const doneCls=item.done?' done-pill':'';
+    const lineThrough=item.done?'text-decoration:line-through;opacity:.5':'';
+    return`<span class="pill ${pillCls}${doneCls}" onclick="upPillClick(${idx})" style="cursor:pointer">
+      <span style="${lineThrough}">${item.name}</span>
+      <span class="pill-x" onclick="event.stopPropagation();pillDone(${idx})" title="标记完成">×</span>
     </span>`;
   }).join('');
+}
+function upPillClick(idx){
+  // 点击pill本身 → 标记完成（划线效果，就地消失归入已完成）
+  pillDone(idx);
 }
 function pillDone(idx){
   ITEMS[idx].done=true;
   refreshAll();
-  toast('已完成：'+ITEMS[idx].name);
 }
 
 // ══════════════════════════════════════════════
 // PAGE 2: 详情/编辑
 // ══════════════════════════════════════════════
+function toggleInfo(){
+  const el=document.getElementById('d-info');
+  const hint=document.getElementById('d-info-hint');
+  const expanded=el.classList.toggle('expanded');
+  if(hint)hint.textContent=expanded?'收起':'点击展开';
+}
+
 function openDetail(idx){
   curIdx=idx;curU=ITEMS[idx].u;
   const d=ITEMS[idx];
   document.getElementById('d-cat-dot').style.background=CAT_COLORS[d.cat]||'#888';
   document.getElementById('d-cat-txt').textContent=d.cat+' › '+d.sub;
   document.getElementById('d-name').textContent=d.name;
-  document.getElementById('d-info').textContent=d.info||'';
+  const infoEl=document.getElementById('d-info');
+  const hintEl=document.getElementById('d-info-hint');
+  infoEl.textContent=d.info||'';
+  infoEl.classList.remove('expanded');
+  // 超过约60字才显示"点击展开"提示
+  if(hintEl){
+    hintEl.style.display=(d.info&&d.info.length>60)?'block':'none';
+    hintEl.textContent='点击展开';
+  }
   const bdg=document.getElementById('d-badge');
   bdg.className='badge '+UC[d.u];bdg.textContent=UL[d.u];
   document.getElementById('d-edit-name').value=d.name;
@@ -1230,11 +1685,31 @@ function openDetail(idx){
   // 触发方式
   let trig=0;
   if(d.type==='once')trig=1;
+  else if(d.type==='phase')trig=5;
+  else if(d.type==='condition')trig=3;
+  else if(d.type==='none')trig=4;
   else if(['daily','weekly','monthly','quarterly','yearly','cycle'].includes(d.type))trig=0;
   curTrig=trig;
-  for(let j=0;j<5;j++) document.getElementById('dtc'+j).classList.toggle('on',j===trig);
-  let tfVals={date:d.date||'',time:'',cycle:d.type==='daily'?'daily':d.type==='weekly'?'weekly':d.type==='monthly'?'monthly':d.type==='quarterly'?'quarterly':d.type==='yearly'?'yearly':'weekly'};
+  for(let j=0;j<6;j++){const el=document.getElementById('dtc'+j);if(el)el.classList.toggle('on',j===trig);}
+  let tfVals={
+    date:d.date||'',
+    enddate:d.enddate||'',
+    time:'',
+    cycle:d.type==='daily'?'daily':d.type==='weekly'?'weekly':d.type==='monthly'?'monthly':d.type==='quarterly'?'quarterly':d.type==='yearly'?'yearly':'weekly',
+    freq:d.freq||'daily',
+    freqval:d.freqval||'',
+    target:d.phaseTarget||''
+  };
   renderTrigFields('d', trig, tfVals);
+  // 阶段任务打卡区
+  const checkinBlock=document.getElementById('d-checkin-block');
+  if(d.type==='phase'){
+    checkinBlock.style.display='block';
+    renderCheckinBlock(idx);
+  } else {
+    checkinBlock.style.display='none';
+    checkinBlock.innerHTML='';
+  }
   // 提醒频率
   const remindVals=(d.remind||'').split('/').filter(Boolean);
   const hoursVal=remindVals.find(v=>v.startsWith('T-')&&v.endsWith('H'));
@@ -1258,7 +1733,7 @@ function openDetail(idx){
 }
 function dSelTrig(i){
   curTrig=i;
-  for(let j=0;j<5;j++) document.getElementById('dtc'+j).classList.toggle('on',j===i);
+  for(let j=0;j<6;j++){const el=document.getElementById('dtc'+j);if(el)el.classList.toggle('on',j===i);}
   renderTrigFields('d', i, {});
 }
 function dSelSeg(el,pid){
@@ -1318,7 +1793,14 @@ function saveDetail(){
   // 触发方式 → date / type
   const tv=getTrigVals('d');
   d.date=tv.date;
-  if(curTrig===2){
+  if(curTrig===5){
+    d.type='phase';
+    d.enddate=tv.enddate;
+    d.freq=tv.freq;
+    d.freqval=tv.freqval;
+    d.phaseTarget=tv.target;
+    if(!d.checkins)d.checkins=[];
+  } else if(curTrig===2){
     d.type=tv.cycle||'cycle';
   } else if(curTrig===1){
     d.type='once';
@@ -1330,10 +1812,12 @@ function saveDetail(){
   } else {
     d.type='cycle';
   }
-  // 重复性覆盖
-  const repOn=document.querySelector('#d-repeat-seg .si.on');
-  const repIdx=[...document.querySelectorAll('#d-repeat-seg .si')].indexOf(repOn);
-  if(repIdx===1) d.type='once';
+  // 重复性覆盖（阶段任务不受此影响）
+  if(curTrig!==5){
+    const repOn=document.querySelector('#d-repeat-seg .si.on');
+    const repIdx=[...document.querySelectorAll('#d-repeat-seg .si')].indexOf(repOn);
+    if(repIdx===1) d.type='once';
+  }
   // 提醒
   const remParts=[...document.querySelectorAll('#d-rt-wrap .rt.on')].map(e=>e.dataset.v);
   const h=document.getElementById('d-remind-hours').value.trim();
@@ -1393,7 +1877,7 @@ function initAddPage(){
 
 function selTrig(i){
   aTrig=i;
-  for(let j=0;j<5;j++) document.getElementById('atc'+j).classList.toggle('on',j===i);
+  for(let j=0;j<6;j++){const el=document.getElementById('atc'+j);if(el)el.classList.toggle('on',j===i);}
   renderTrigFields('a', i, {});
   updatePv();
 }
@@ -1519,11 +2003,13 @@ function saveNew(){
   else if(aTrig===2)type=tv.cycle||'cycle';
   else if(aTrig===3)type='condition';
   else if(aTrig===4)type='none';
-  const repOn=document.querySelector('#a-repeat-seg .si.on');
-  const repIdx=[...document.querySelectorAll('#a-repeat-seg .si')].indexOf(repOn);
-  if(repIdx===1)type='once';
+  else if(aTrig===5)type='phase';
+  if(aTrig!==5){
+    const repOn=document.querySelector('#a-repeat-seg .si.on');
+    const repIdx=[...document.querySelectorAll('#a-repeat-seg .si')].indexOf(repOn);
+    if(repIdx===1)type='once';
+  }
   const remParts=[...document.querySelectorAll('#a-rt-wrap .rt.on')].map(e=>e.dataset.v);
-  // 紧急程度：优先使用手动选择，否则自动判断
   const finalU=aManualU||(autoUrgency().u);
   if(!A_CATS.includes(cat))A_CATS.push(cat);
   ITEMS.push({
@@ -1534,7 +2020,12 @@ function saveNew(){
     date:tv.date,
     enddate:tv.enddate||'',
     time:tv.time||'',
-    type,remind:remParts.join('/'),
+    type,
+    freq:aTrig===5?tv.freq:'',
+    freqval:aTrig===5?tv.freqval:'',
+    phaseTarget:aTrig===5?tv.target:'',
+    checkins:aTrig===5?[]:undefined,
+    remind:remParts.join('/'),
     u:finalU,done:false
   });
   toast('已添加：'+name);
@@ -1546,33 +2037,93 @@ function saveNew(){
 // ══════════════════════════════════════════════
 function fmtDate(s){
   if(!s||s==='—')return '—';
+  // 每月X日 → 月/日
   let m=s.match(/每月(\d+)[日号]/);
   if(m)return `每月\n${m[1]}日`;
+  // YYYY/MM/DD → MM/DD
   m=s.match(/\d{4}[\/\-](\d{1,2})[\/\-](\d{1,2})/);
   if(m)return `${m[1]}/${m[2]}`;
+  // MM/DD
   m=s.match(/^(\d{1,2})\/(\d{1,2})$/);
   if(m)return s;
+  // 超过6个字截断
   if(s.length>6)return s.slice(0,5)+'…';
   return s;
 }
 function renderReport(){
   const today=new Date();
-  const end=new Date(today);end.setDate(end.getDate()+14);
   const WD=['日','一','二','三','四','五','六'];
+  // 计算本周开始（周一）
+  const dayOfWeek=today.getDay(); // 0=周日
+  const daysToMonday=dayOfWeek===0?6:dayOfWeek-1;
+  const weekStart=new Date(today);
+  weekStart.setDate(today.getDate()-daysToMonday);
+  weekStart.setHours(0,0,0,0);
+  const weekEnd=new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate()+6);
+  const lastWeekStart=new Date(weekStart);
+  lastWeekStart.setDate(weekStart.getDate()-7);
+  const lastWeekEnd=new Date(weekStart);
+  lastWeekEnd.setDate(weekStart.getDate()-1);
+
+  function fmt(d){return `${d.getMonth()+1}/${d.getDate()}`;}
+  function getWeekNum(d){
+    const jan1=new Date(d.getFullYear(),0,1);
+    return Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+  }
+  const wn=getWeekNum(today);
   document.getElementById('r-today').textContent=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日 周${WD[today.getDay()]}`;
-  document.getElementById('r-range').textContent=`${today.getMonth()+1}/${today.getDate()} — ${end.getMonth()+1}/${end.getDate()}`;
-  const urgent=ITEMS.filter(d=>d.u==='r').length;
-  const soon=ITEMS.filter(d=>d.u==='a').length;
-  document.getElementById('rpt-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-n r">${urgent}</div><div class="stat-lbl">紧急处理</div></div>
-    <div class="stat-card"><div class="stat-n a">${soon}</div><div class="stat-lbl">即将到期</div></div>`;
-  const dateItems=ITEMS.filter(d=>d.u==='r'||d.u==='a').slice(0,10);
-  document.getElementById('rpt-list').innerHTML=dateItems.map(item=>`
-    <div class="day-item ${item.u==='r'?'urgent':item.u==='a'?'soon':''}">
-      <div class="day-n">${fmtDate(item.date)}</div>
-      <div><div class="di-name">${item.name}</div><div class="di-cat">${item.cat}</div></div>
-      <span class="badge ${UC[item.u]}">${UL[item.u]}</span>
-    </div>`).join('');
+  document.getElementById('r-range').textContent=`上周 W${wn-1}（${fmt(lastWeekStart)}—${fmt(lastWeekEnd)}）  本周 W${wn}（${fmt(weekStart)}—${fmt(weekEnd)}）`;
+
+  // 计算过去1周/当前1周/未来1周的任务数和完成比例
+  const now=new Date(); now.setHours(0,0,0,0);
+  const weekMs=7*24*3600*1000;
+  const pastStart=new Date(now-weekMs);
+  const futureEnd=new Date(now.getTime()+weekMs);
+
+  function countWeek(startD, endD){
+    const items=ITEMS.filter(item=>{
+      const ds=itemDateStr(item);
+      if(!ds) return false;
+      const d=new Date(ds);
+      return d>=startD && d<endD;
+    });
+    const done=items.filter(i=>i.done).length;
+    return {total:items.length, done};
+  }
+
+  const past=countWeek(pastStart, now);
+  const curr=countWeek(now, new Date(now.getTime()+weekMs));
+  const future=countWeek(new Date(now.getTime()+weekMs), new Date(now.getTime()+2*weekMs));
+
+  function statCard(label, data, color){
+    const pct=data.total?Math.round(data.done/data.total*100):0;
+    return `<div style="background:var(--bg2);border:0.5px solid var(--gb);border-radius:var(--rl);padding:12px;text-align:center">
+      <div style="font-size:10px;color:var(--mu);margin-bottom:6px">${label}</div>
+      <div style="font-size:18px;font-weight:600;color:${color}">${data.total}</div>
+      <div style="font-size:11px;color:var(--mu);margin-top:3px">${data.done}/${data.total}</div>
+      <div style="height:3px;background:var(--bg3);border-radius:2px;margin-top:6px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:2px"></div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('rpt-stats').innerHTML=
+    statCard('过去一周',past,'#888780')+
+    statCard('本周',curr,'#c9a84c')+
+    statCard('下一周',future,'#1D9E75');
+  // 和14天区同步：未来14天内所有未完成事项，按日期排序
+  const dateItems=ITEMS.filter(item=>isInNext14Days(item)).sort((a,b)=>{
+    const da=itemDateStr(a)||'9999';
+    const db=itemDateStr(b)||'9999';
+    return da<db?-1:da>db?1:0;
+  });
+  document.getElementById('rpt-list').innerHTML=dateItems.length
+    ? dateItems.map(item=>{
+        const idx=ITEMS.indexOf(item);
+        return makeItemCard(item,idx,{showDate:true});
+      }).join('')
+    : `<div style="color:var(--mu);font-size:13px;padding:8px 0">未来14天暂无事项</div>`;
   const WATCH_KW=['保级','积分','用药','打电话','哮喘','驱虫','汇率','定投','密码','备份'];
   const watchItems=ITEMS.filter(d=>d.type==='cycle'&&WATCH_KW.some(k=>d.name.includes(k)||(d.info||'').includes(k))).slice(0,5);
   const WC=['#c9a84c','#c9a84c','#888780','#888780','#3a9e8a'];
@@ -1601,23 +2152,32 @@ function calMove(dir){
 function parseItemDates(item){
   const s=item.date||'';
   const results=[];
-  // 完整日期 YYYY/MM/DD 或 YYYY-MM-DD
-  let m=s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  let m=s.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
   if(m) return [{y:+m[1],mo:+m[2]-1,d:+m[3],type:'exact'}];
-  // 仅年月 YYYY/MM
-  m=s.match(/^(\d{4})[\/\-](\d{1,2})$/);
+  m=s.match(/^(\d{4})[\/-](\d{1,2})$/);
   if(m) return [{y:+m[1],mo:+m[2]-1,d:1,type:'month'}];
-  // MM/DD 每年循环
   m=s.match(/^(\d{1,2})\/(\d{1,2})$/);
   if(m) return [{mo:+m[1]-1,d:+m[2],type:'yearly'}];
-  // 每月N日
   m=s.match(/每月(\d{1,2})[日号]/);
   if(m) return [{d:+m[1],type:'monthly'}];
   return results;
 }
 
 function getItemsForDay(y,mo,d){
+  const dateStr=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   return ITEMS.filter(item=>{
+    // 阶段任务：该日在开始~结束之间
+    if(item.type==='phase'){
+      const s=item.date||''; const e=item.enddate||'';
+      const ms=s.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+      const me=e.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+      // date为空时用今天作为开始（兼容旧数据）
+      const todayStr=new Date().toISOString().slice(0,10);
+      const startStr=ms?`${ms[1]}-${ms[2].padStart(2,'0')}-${ms[3].padStart(2,'0')}`:todayStr;
+      if(!me) return dateStr>=startStr;
+      const endStr=`${me[1]}-${me[2].padStart(2,'0')}-${me[3].padStart(2,'0')}`;
+      return dateStr>=startStr && dateStr<=endStr;
+    }
     const dates=parseItemDates(item);
     return dates.some(pd=>{
       if(pd.type==='exact') return pd.y===y&&pd.mo===mo&&pd.d===d;
@@ -1657,11 +2217,11 @@ function renderCalendar(){
     const isSel=calSelDay&&calSelDay.y===c.y&&calSelDay.mo===c.mo&&calSelDay.d===c.d;
     const dow=new Date(c.y,c.mo,c.d).getDay();
     const items=c.other?[]:getItemsForDay(c.y,c.mo,c.d);
-    const dots=items.slice(0,4).map(it=>`<span class="cal-dot" style="background:${CAT_COLORS[it.cat]||'#888'}"></span>`).join('');
+    const dots=items.slice(0,4).map(it=>`<div class="cal-dot" style="background:${getItemDotColor(it)}"></div>`).join('');
     return`<div class="cal-cell${c.other?' other-month':''}${isToday?' today':''}${isSel?' selected':''}${dow===0?' sunday':dow===6?' saturday':''}" 
       onclick="calSelDate(${c.y},${c.mo},${c.d})">
-      <span class="cal-num">${c.d}</span>
-      ${dots?`<div class="cal-dots">${dots}</div>`:''}
+      <div class="cal-num">${c.d}</div>
+      <div class="cal-dots">${dots}</div>
     </div>`;
   }).join('');
 }
@@ -1679,11 +2239,7 @@ function calSelDate(y,mo,d){
   } else {
     list.innerHTML=items.map(item=>{
       const idx=ITEMS.indexOf(item);
-      return`<div class="cal-day-row${item.u==='r'?' urgent':item.u==='a'?' soon':''}" onclick="openDetail(${idx})">
-        <span class="s-dot" style="background:${CAT_COLORS[item.cat]||'#888'};width:7px;height:7px;border-radius:50%;flex-shrink:0"></span>
-        <div style="min-width:0"><div class="rn" style="font-size:13px">${item.name}</div><div class="rs">${item.sub}</div></div>
-        <span class="badge ${UC[item.u]}">${UL[item.u]}</span>
-      </div>`;
+      return makeItemCard(item,idx,{showDate:false});
     }).join('');
   }
   detail.style.display='block';
@@ -1695,7 +2251,7 @@ function calSelDate(y,mo,d){
 const STORAGE_KEY = 'sunny_calendar_family_items';
 const STORAGE_META = 'sunny_calendar_family_meta';
 const STORAGE_VER = 'sunny_calendar_family_ver';
-const CURRENT_VER = '2';
+const CURRENT_VER = '2'; // 每次重大数据结构变更时递增
 
 function saveToLocal(){
   try{
@@ -1711,9 +2267,11 @@ function saveToLocal(){
 function loadFromLocal(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
+    // 本地没有数据 → 返回0，调用方会用内置数据
     if(!raw) return 0;
     const parsed = JSON.parse(raw);
     if(!Array.isArray(parsed) || parsed.length < 5) return 0;
+    // 有数据就直接用，同时把版本号补写上
     ITEMS.length = 0;
     parsed.forEach(item => ITEMS.push(item));
     localStorage.setItem(STORAGE_VER, CURRENT_VER);
@@ -1785,63 +2343,39 @@ function updateMineStats(){
       el2.textContent=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     }
   }catch(e){}
-}
-
-// ══════════════════════════════════════════════
-// 右滑删除
-// ══════════════════════════════════════════════
-let _swipe={idx:-1,startX:0,startY:0,moved:false,swiped:false};
-let _swipedIdx=-1; // 当前已滑开的行
-
-function rowClick(e,idx){
-  if(_swipedIdx===idx){snapBack(idx);return;}
-  if(_swipedIdx>=0) snapBack(_swipedIdx);
-  openDetail(idx);
-}
-
-function swipeStart(e,idx){
-  if(e.touches.length!==1)return;
-  _swipe={idx,startX:e.touches[0].clientX,startY:e.touches[0].clientY,moved:false,swiped:_swipedIdx===idx};
-  if(_swipedIdx>=0 && _swipedIdx!==idx) snapBack(_swipedIdx);
-}
-
-function swipeMove(e,idx){
-  if(_swipe.idx!==idx)return;
-  const dx=e.touches[0].clientX-_swipe.startX;
-  const dy=e.touches[0].clientY-_swipe.startY;
-  if(!_swipe.moved && Math.abs(dy)>Math.abs(dx)) return;
-  _swipe.moved=true;
-  e.preventDefault();
-  const ri=document.getElementById('ri-'+idx);
-  if(!ri)return;
-  const base=_swipe.swiped?-80:0;
-  const offset=Math.min(0,Math.max(-80,base+dx));
-  ri.style.transition='none';
-  ri.style.transform=`translateX(${offset}px)`;
-}
-
-function swipeEnd(e,idx){
-  if(_swipe.idx!==idx||!_swipe.moved)return;
-  const dx=e.changedTouches[0].clientX-_swipe.startX;
-  const ri=document.getElementById('ri-'+idx);
-  if(!ri)return;
-  ri.style.transition='';
-  const base=_swipe.swiped?-80:0;
-  if(base+dx<-40){
-    ri.style.transform='translateX(-80px)';
-    ri.classList.add('swiped');
-    _swipedIdx=idx;
-  } else {
-    snapBack(idx);
+  // 显示阶段任务调试信息
+  const dbg=document.getElementById('mine-phase-debug');
+  if(dbg){
+    const phases=ITEMS.filter(i=>i.type==='phase');
+    if(phases.length===0){
+      dbg.innerHTML='<div style="color:var(--mu);font-size:12px">暂无阶段任务</div>';
+    } else {
+      dbg.innerHTML=phases.map(p=>`
+        <div style="font-size:11px;color:var(--mu);padding:4px 0;border-bottom:0.5px solid var(--gb)">
+          <div style="color:var(--w)">${p.name}</div>
+          <div>date: "${p.date}" / enddate: "${p.enddate||'—'}"</div>
+          <div>type: ${p.type} / checkins: ${(p.checkins||[]).length}</div>
+        </div>`).join('');
+    }
   }
 }
 
+// ══════════════════════════════════════════════
+// 主列表右滑删除（主页 itemList）
+// ══════════════════════════════════════════════
+let _swipe={idx:-1,startX:0,startY:0,moved:false,swiped:false};
+let _swipedIdx=-1;
+
+function rowClick(e,idx){
+  if(_swipedIdx===idx){snapBack(idx);return;}
+  if(_swipedIdx>=0)snapBack(_swipedIdx);
+  openDetail(idx);
+}
 function snapBack(idx){
   const ri=document.getElementById('ri-'+idx);
   if(ri){ri.style.transform='';ri.classList.remove('swiped');}
   if(_swipedIdx===idx)_swipedIdx=-1;
 }
-
 function swipeDelete(idx){
   if(_swipedIdx!==idx)return;
   const name=ITEMS[idx].name;
@@ -1884,12 +2418,26 @@ function renderAttachmentsD(){
 function removeAttachD(i){dAttachments.splice(i,1);renderAttachmentsD();}
 
 // ══════════════════════════════════════════════
-// 尝试从本地读取（本地有数据则覆盖内置140条）
+// 尝试从本地读取（本地有数据则覆盖内置125条）
 const _localCount = loadFromLocal();
 if (_localCount === 0) {
   saveToLocal();
 }
+// loadFromLocal 可能替换了 ITEMS，重新生成 A_CATS
 A_CATS = [...new Set(ITEMS.map(d=>d.cat))];
+
+// 迁移旧分类名 → 新分类名
+const CAT_MIGRATE={'合同':'合同管理','订阅':'订阅服务','健康':'健康医疗','教育':'教育成长','资产':'财务资产','社交':'社交生活','复盘':'复盘规划','出行规划':'交通出行','优惠券':'会员权益','权益福利':'会员权益','证件法律':'证件管理'};
+let _migrated=false;
+ITEMS.forEach(item=>{
+  if(CAT_MIGRATE[item.cat]){item.cat=CAT_MIGRATE[item.cat];_migrated=true;}
+  // 视频会员从会员权益移到订阅服务
+  if(item.cat==='会员权益'&&item.sub==='视频会员'){item.cat='订阅服务';_migrated=true;}
+});
+if(_migrated){
+  A_CATS=[...new Set(ITEMS.map(d=>d.cat))];
+  saveToLocal();
+}
 navTo('p-home');
 </script>
 </body>
