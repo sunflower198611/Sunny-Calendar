@@ -16,10 +16,10 @@
   --greenbg:rgba(58,125,68,0.12);--greenborder:rgba(58,125,68,0.28);--greentext:#6ab87a;
   --r:8px;--rl:12px;
 }
-html,body{height:100%;height:-webkit-fill-available;background:var(--bg);color:var(--w);font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif;font-size:14px;overflow:hidden}
+html,body{height:100%;height:-webkit-fill-available;height:100dvh;background:var(--bg);color:var(--w);font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif;font-size:14px;overflow:hidden}
 
 /* ── 页面容器 ── */
-.app{max-width:430px;margin:0 auto;height:100vh;height:-webkit-fill-available;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.app{max-width:430px;margin:0 auto;height:100vh;height:-webkit-fill-available;height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
 .page{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .28s;will-change:transform}
 .page.hidden{transform:translateX(100%);pointer-events:none}
 .page.slide-left{transform:translateX(-30%);opacity:.5;pointer-events:none}
@@ -36,7 +36,7 @@ html,body{height:100%;height:-webkit-fill-available;background:var(--bg);color:v
 .del-top-btn{font-size:12px;color:var(--redtext);cursor:pointer;padding:5px 10px;border-radius:6px;border:0.5px solid var(--redborder);background:var(--redbg)}
 
 /* ── 底部导航 ── */
-.nav{display:flex;flex-shrink:0;background:var(--bg);border-top:0.5px solid var(--gb);padding:8px 0 28px;flex-shrink:0padding-bottom:max(8px,env(safe-area-inset-bottom));}
+.nav{display:flex;flex-shrink:0;background:var(--bg);border-top:0.5px solid var(--gb);padding:8px 0;padding-bottom:max(28px,env(safe-area-inset-bottom));}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0}
 .ni svg{width:20px;height:20px;stroke:var(--dim);fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
 .ni.on svg{stroke:var(--gold)}
@@ -3068,28 +3068,52 @@ const STORAGE_META = 'sunny_calendar_meta';
 const STORAGE_VER  = 'sunny_calendar_ver';
 const CURRENT_VER  = '2';
 
+// ── 存储能力检测（Safari file:// 协议下 localStorage/IDB 均被禁用）──
+const _MEM = {}; // 内存兜底存储
+function _lsAvailable(){
+  try{const t='__t__';localStorage.setItem(t,t);localStorage.removeItem(t);return true;}
+  catch(e){return false;}
+}
+const _LS_OK = _lsAvailable();
+
 // ── IndexedDB 封装（后台异步，不阻塞渲染）──
 const _IDB = {
   _p:null,
+  _ok: typeof indexedDB !== 'undefined',
   open(){
+    if(!this._ok) return Promise.reject(new Error('IDB not available'));
     if(this._p) return this._p;
     this._p = new Promise((res,rej)=>{
-      const r=indexedDB.open('SunnyCalendarDB',1);
-      r.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains('kv'))e.target.result.createObjectStore('kv');};
-      r.onsuccess=e=>{this.db=e.target.result;res(this.db);};
-      r.onerror=e=>rej(e.target.error);
+      try{
+        const r=indexedDB.open('SunnyCalendarDB',1);
+        r.onupgradeneeded=e=>{try{if(!e.target.result.objectStoreNames.contains('kv'))e.target.result.createObjectStore('kv');}catch(err){}};
+        r.onsuccess=e=>{this.db=e.target.result;res(this.db);};
+        r.onerror=e=>{this._ok=false;rej(e.target.error);};
+        r.onblocked=()=>{this._ok=false;rej(new Error('IDB blocked'));};
+      }catch(err){this._ok=false;rej(err);}
     });
     return this._p;
   },
-  async get(k){const db=await this.open();return new Promise((res,rej)=>{const r=db.transaction('kv','readonly').objectStore('kv').get(k);r.onsuccess=()=>res(r.result??null);r.onerror=e=>rej(e.target.error);});},
-  async set(k,v){const db=await this.open();return new Promise((res,rej)=>{const r=db.transaction('kv','readwrite').objectStore('kv').put(v,k);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});},
-  async del(k){const db=await this.open();return new Promise((res,rej)=>{const r=db.transaction('kv','readwrite').objectStore('kv').delete(k);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});},
+  async get(k){try{const db=await this.open();return new Promise((res,rej)=>{const r=db.transaction('kv','readonly').objectStore('kv').get(k);r.onsuccess=()=>res(r.result??null);r.onerror=e=>rej(e.target.error);});}catch(e){return null;}},
+  async set(k,v){try{const db=await this.open();return new Promise((res,rej)=>{const r=db.transaction('kv','readwrite').objectStore('kv').put(v,k);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch(e){}},
+  async del(k){try{const db=await this.open();return new Promise((res,rej)=>{const r=db.transaction('kv','readwrite').objectStore('kv').delete(k);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch(e){}},
 };
 
-// ── 读写接口：优先 localStorage（同步快），后台同步到 IDB ──
-function _get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
-function _set(k,v){ try{localStorage.setItem(k,v);}catch(e){} _IDB.set(k,v).catch(()=>{}); }
-function _del(k){ try{localStorage.removeItem(k);}catch(e){} _IDB.del(k).catch(()=>{}); }
+// ── 读写接口：localStorage → IDB → 内存，三级兜底 ──
+function _get(k){
+  if(_LS_OK){try{return localStorage.getItem(k);}catch(e){}}
+  return Object.prototype.hasOwnProperty.call(_MEM,k)?_MEM[k]:null;
+}
+function _set(k,v){
+  if(_LS_OK){try{localStorage.setItem(k,v);}catch(e){}}
+  else{_MEM[k]=v;}
+  _IDB.set(k,v).catch(()=>{});
+}
+function _del(k){
+  if(_LS_OK){try{localStorage.removeItem(k);}catch(e){}}
+  else{delete _MEM[k];}
+  _IDB.del(k).catch(()=>{});
+}
 
 // ── 主数据 save / load ──
 function saveToLocal(){
